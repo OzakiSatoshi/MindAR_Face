@@ -7,15 +7,14 @@
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
         position: fixed;
-        bottom: 10px; /* 少し上に配置してスクロールバーの干渉を避ける */
+        bottom: 10px;
         width: 100%;
         text-align: center;
-        z-index: 10; /* ロゴを最前面に表示 */
-        pointer-events: none; /* クリックを無効化 */
+        z-index: 100; /* 他の要素の上に表示 */
       }
       .logo img {
         max-width: 150px;
-        width: 30%; /* スマホでも見やすくするためレスポンシブ対応 */
+        width: 30%;
         height: auto;
       }
 
@@ -24,7 +23,7 @@
         position: fixed;
         bottom: 10px;
         left: 10px;
-        z-index: 10;
+        z-index: 100;
         padding: 10px 15px;
         background-color: #007bff;
         color: white;
@@ -66,7 +65,7 @@
 
     <!-- 社名ロゴ -->
     <div class="logo">
-      <img src="your-logo.png" alt="Company Logo">
+      <img src="Logo&Font_BackAlpha.png" alt="Company Logo">
     </div>
 
     <!-- 撮影ボタン -->
@@ -81,11 +80,12 @@
       const scene = document.querySelector('a-scene');
 
       captureBtn.addEventListener('click', () => {
-        const video = scene.renderer.domElement; // A-Frameのビデオストリームを取得
+        const video = scene.renderer.domElement; // A-Frameのレンダリング内容を取得
         const context = canvas.getContext('2d');
         canvas.width = video.width;
         canvas.height = video.height;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height); // AR表示内容を描画
+
         const imageData = canvas.toDataURL('image/png');
         
         // キャプチャ画像をダウンロード
