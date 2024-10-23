@@ -7,29 +7,42 @@
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
         position: fixed;
-        bottom: 0;
+        bottom: 10px; /* 少し上に配置してスクロールバーの干渉を避ける */
         width: 100%;
         text-align: center;
         z-index: 10; /* ロゴを最前面に表示 */
+        pointer-events: none; /* クリックを無効化 */
       }
       .logo img {
-        width: 150px;
+        max-width: 150px;
+        width: 30%; /* スマホでも見やすくするためレスポンシブ対応 */
+        height: auto;
       }
 
       /* 撮影ボタンのスタイル */
       #capture-btn {
         position: fixed;
-        bottom: 60px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 10px;
+        left: 10px;
         z-index: 10;
-        padding: 10px 20px;
+        padding: 10px 15px;
         background-color: #007bff;
         color: white;
         border: none;
         border-radius: 5px;
-        font-size: 16px;
+        font-size: 14px;
         cursor: pointer;
+      }
+
+      /* モバイルデバイスの画面サイズに応じて調整 */
+      @media (max-width: 768px) {
+        #capture-btn {
+          font-size: 12px;
+          padding: 8px 12px;
+        }
+        .logo img {
+          max-width: 100px;
+        }
       }
     </style>
   </head>
@@ -53,7 +66,7 @@
 
     <!-- 社名ロゴ -->
     <div class="logo">
-      <img src="Logo&Font_BackAlpha.png" alt="Company Logo">
+      <img src="your-logo.png" alt="Company Logo">
     </div>
 
     <!-- 撮影ボタン -->
