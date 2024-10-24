@@ -10,12 +10,12 @@
         bottom: 10px; /* 画面の下部に表示 */
         left: 50%;
         transform: translateX(-50%);
-        z-index: 1000; /* 他の要素よりも前に表示 */
-        pointer-events: none; /* クリックを無効化 */
+        z-index: 1000; /* カメラ映像よりも前面に表示 */
+        pointer-events: none; /* ロゴがクリックされないように */
       }
       .logo img {
         max-width: 150px;
-        width: 30%; /* スマホでも見やすくするためレスポンシブ対応 */
+        width: 30%;
         height: auto;
       }
 
@@ -24,9 +24,9 @@
         position: fixed;
         bottom: 10px; /* 画面下部に配置 */
         left: 10px; /* 画面の左端に配置 */
-        z-index: 1001; /* ロゴより前面に表示 */
+        z-index: 1001; /* ロゴよりも前面に表示 */
         padding: 10px;
-        background-color: transparent; /* 背景は透明に設定 */
+        background-color: transparent;
         border: none;
         cursor: pointer;
       }
@@ -34,12 +34,12 @@
       /* モバイルデバイスの画面サイズに応じて調整 */
       @media (max-width: 768px) {
         .logo img {
-          max-width: 100px; /* ロゴサイズを縮小 */
+          max-width: 100px;
         }
         #capture-btn {
-          width: 60px; /* モバイル用に撮影ボタンのサイズ調整 */
+          width: 60px;
           height: 60px;
-          bottom: 20px; /* スペースを調整 */
+          bottom: 20px;
         }
       }
     </style>
@@ -47,9 +47,12 @@
 
   <body>
     <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-face embedded color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false" 
+             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
       <a-assets>
-        <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
@@ -64,11 +67,10 @@
 
     <!-- 社名ロゴ -->
     <div class="logo">
-      <!-- 画像パスのURLエンコードと絶対パスの適用 -->
       <img src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
     </div>
 
-    <!-- 撮影ボタンをshutter.pngに変更 -->
+    <!-- 撮影ボタン -->
     <button id="capture-btn">
       <img src="./shutter.png" alt="Shutter Button" style="width:100%; height:100%;">
     </button>
