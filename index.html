@@ -10,7 +10,7 @@
         bottom: 10px;
         width: 100%;
         text-align: center;
-        z-index: 10; /* 他の要素の上に表示 */
+        z-index: 10;
       }
       .logo img {
         max-width: 150px;
@@ -103,12 +103,12 @@
         context.drawImage(videoElement, -canvas.width, 0, canvas.width, canvas.height); // 反転した状態で描画
         context.restore();
 
-        // 2. その上にGLTFモデルを描画 (WebGL)
+        // 2. WebGLコンテンツをCanvasに描画
         const gl = scene.renderer.getContext();  // WebGLコンテキストを取得
         const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4); // ピクセルデータ取得用のバッファ
         gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-        // WebGLコンテンツをCanvasに描画
+        // WebGLコンテンツをキャンバスに描画
         const imageData = context.createImageData(gl.drawingBufferWidth, gl.drawingBufferHeight);
         imageData.data.set(pixels);
         context.putImageData(imageData, 0, 0);
