@@ -1,119 +1,98 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta charset="UTF-8">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
-      .error-container {
+      /* 社名ロゴを画面下部に固定表示 */
+      .logo {
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(255, 0, 0, 0.9);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
+        bottom: 10px; /* 少し上に配置してスクロールバーの干渉を避ける */
+        width: 100%;
         text-align: center;
-        z-index: 1001;
-        display: none;
+        z-index: 10; /* ロゴを最前面に表示 */
+        pointer-events: none; /* クリックを無効化 */
+      }
+      .logo img {
+        max-width: 150px;
+        width: 30%; /* スマホでも見やすくするためレスポンシブ対応 */
+        height: auto;
       }
 
-      .error-container button {
-        margin-top: 10px;
-        padding: 5px 10px;
-        background: white;
+      /* 撮影ボタンのスタイル */
+      #capture-btn {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        z-index: 10;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
         border: none;
         border-radius: 5px;
+        font-size: 14px;
         cursor: pointer;
+      }
+
+      /* モバイルデバイスの画面サイズに応じて調整 */
+      @media (max-width: 768px) {
+        #capture-btn {
+          font-size: 12px;
+          padding: 8px 12px;
+        }
+        .logo img {
+          max-width: 100px;
+        }
       }
     </style>
   </head>
-  <body>
-    <!-- エラー表示 -->
-    <div class="error-container" id="errorContainer">
-      <div id="errorMessage"></div>
-      <button id="retryButton">再試行</button>
-    </div>
 
-    <!-- ARシーン -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
+  <body>
+    <!-- MindARのシーン設定 -->
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-assets>
+        <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
+      <!-- カメラ設定 -->
       <a-camera active="false" position="0 0 0"></a-camera>
 
+      <!-- 複数トラッキングを有効にするエンティティ -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <!-- キャプチャ用ボタン -->
-    <button id="capture-btn" disabled>撮影</button>
+    <!-- 社名ロゴ -->
+    <div class="logo">
+      <img src="Logo&Font_BackAlpha.png" alt="Company Logo">
+    </div>
 
-    <canvas id="arCanvas" style="display:none;"></canvas>
+    <!-- 撮影ボタン -->
+    <button id="capture-btn">撮影</button>
+
+    <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const errorContainer = document.getElementById('errorContainer');
-        const errorMessage = document.getElementById('errorMessage');
-        const retryButton = document.getElementById('retryButton');
-        const scene = document.querySelector('a-scene');
-        const captureBtn = document.getElementById('capture-btn');
+      // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
+      const captureBtn = document.getElementById('capture-btn');
+      const canvas = document.getElementById('arCanvas');
+      const scene = document.querySelector('a-scene');
 
-        // エラー表示
-        const showError = (message, isRetryable = true) => {
-          errorMessage.textContent = message;
-          retryButton.style.display = isRetryable ? 'block' : 'none';
-          errorContainer.style.display = 'block';
-        };
-
-        // カメラアクセス確認
-        const checkCameraAccess = async () => {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            stream.getTracks().forEach(track => track.stop());
-            return true;
-          } catch (error) {
-            if (error.name === 'NotReadableError') {
-              showError('カメラは他のアプリケーションまたはタブで使用されています。カメラを閉じて再試行してください。', true);
-            } else if (error.name === 'NotAllowedError') {
-              showError('カメラへのアクセスが拒否されました。ブラウザ設定を確認してください。', false);
-            } else {
-              showError('カメラアクセスに問題が発生しました。', false);
-            }
-            throw new Error('カメラアクセスエラー: ' + error.message);
-          }
-        };
-
-        // モデルロード確認
-        const checkModelLoading = async () => {
-          const model = document.querySelector('a-gltf-model');
-          return new Promise((resolve, reject) => {
-            model.addEventListener('model-loaded', () => resolve(true));
-            model.addEventListener('model-error', () => reject(false));
-          });
-        };
-
-        // リトライ処理
-        retryButton.addEventListener('click', async () => {
-          errorContainer.style.display = 'none';
-          await initARScene();
-        });
-
-        // 初期化
-        const initARScene = async () => {
-          try {
-            await checkCameraAccess();
-            await checkModelLoading();
-            captureBtn.disabled = false;  // カメラアクセスとモデルのロードが成功したらボタンを有効化
-          } catch (error) {
-            captureBtn.disabled = true;
-          }
-        };
-
-        initARScene();
+      captureBtn.addEventListener('click', () => {
+        const video = scene.renderer.domElement; // A-Frameのビデオストリームを取得
+        const context = canvas.getContext('2d');
+        canvas.width = video.width;
+        canvas.height = video.height;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL('image/png');
+        
+        // キャプチャ画像をダウンロード
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = 'capture.png';
+        link.click();
       });
     </script>
   </body>
