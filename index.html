@@ -7,7 +7,7 @@
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
         position: fixed;
-        bottom: 10px; /* 少し上に配置してスクロールバーの干渉を避ける */
+        bottom: 60px; /* ボタンとのスペースを確保 */
         width: 100%;
         text-align: center;
         z-index: 10; /* ロゴを最前面に表示 */
@@ -15,7 +15,7 @@
       }
       .logo img {
         max-width: 150px;
-        width: 30%; /* スマホでも見やすくするためレスポンシブ対応 */
+        width: 30%;
         height: auto;
       }
 
@@ -24,7 +24,7 @@
         position: fixed;
         bottom: 10px;
         left: 10px;
-        z-index: 10;
+        z-index: 20; /* ロゴより前面に表示 */
         padding: 10px 15px;
         background-color: #007bff;
         color: white;
@@ -39,6 +39,8 @@
         #capture-btn {
           font-size: 12px;
           padding: 8px 12px;
+          bottom: 20px; /* スマホでの表示位置を調整 */
+          left: 10px;
         }
         .logo img {
           max-width: 100px;
