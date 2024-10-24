@@ -3,6 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script> <!-- html2canvasを読み込む -->
     <style>
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
@@ -48,7 +49,7 @@
 
   <body>
     <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="capture-area">
       <a-assets>
         <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
@@ -71,35 +72,18 @@
     <!-- 撮影ボタン -->
     <button id="capture-btn">撮影</button>
 
-    <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
-
     <script>
       const captureBtn = document.getElementById('capture-btn');
-      const canvas = document.getElementById('arCanvas');
-      const scene = document.getElementById('ar-scene');
-      const logoImg = document.getElementById('logo-img');
+      const captureArea = document.getElementById('capture-area');
 
       captureBtn.addEventListener('click', () => {
-        const renderer = scene.renderer;
-        const videoElement = renderer.domElement;
-        const context = canvas.getContext('2d');
-        
-        // Canvasのサイズを設定
-        canvas.width = videoElement.width;
-        canvas.height = videoElement.height;
-
-        // WebGLコンテンツをキャンバスに描画
-        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-        // ロゴをキャンバスに描画
-        context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10);
-
-        // キャプチャ画像をダウンロード
-        const imageDataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = imageDataUrl;
-        link.download = 'capture.png';
-        link.click();
+        // スクリーンショットを撮る
+        html2canvas(captureArea).then(function(canvas) {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = 'capture.png';
+          link.click();
+        });
       });
     </script>
   </body>
