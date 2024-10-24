@@ -73,32 +73,41 @@
 
     <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
+    <!-- カメラ映像を表示するためのビデオ要素 -->
+    <video id="video" autoplay playsinline style="display:none;"></video>
+
     <script>
-      // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
+      // カメラ映像を取得
+      navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+      });
+
+      // 撮影ボタンを押した際に現在のAR表示とカメラ映像をキャプチャする機能
       const captureBtn = document.getElementById('capture-btn');
       const canvas = document.getElementById('arCanvas');
+      const videoElement = document.getElementById('video');
       const scene = document.querySelector('a-scene');
 
-      // 撮影機能の改善：requestAnimationFrameを使用して正しいフレームをキャプチャ
       captureBtn.addEventListener('click', () => {
         const video = scene.renderer.domElement; // A-Frameのレンダリング内容を取得
-        const gl = video.getContext('webgl') || video.getContext('experimental-webgl'); // WebGLコンテキストを取得
+        const context = canvas.getContext('2d');
+        canvas.width = video.width;
+        canvas.height = video.height;
 
-        // 1フレーム待ってキャプチャする
-        requestAnimationFrame(() => {
-          canvas.width = video.width;
-          canvas.height = video.height;
-          const context = canvas.getContext('2d');
-          context.drawImage(video, 0, 0, canvas.width, canvas.height); // AR表示内容を描画
+        // 1. カメラ映像をキャンバスに描画
+        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-          const imageData = canvas.toDataURL('image/png');
-          
-          // キャプチャ画像をダウンロード
-          const link = document.createElement('a');
-          link.href = imageData;
-          link.download = 'capture.png';
-          link.click();
-        });
+        // 2. その上にGLTFモデルを描画
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = canvas.toDataURL('image/png');
+        
+        // キャプチャ画像をダウンロード
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = 'capture.png';
+        link.click();
       });
     </script>
   </body>
