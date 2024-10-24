@@ -6,11 +6,11 @@
     <style>
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
-        position: fixed;
+        position: absolute;
         bottom: 10px;
         width: 100%;
         text-align: center;
-        z-index: 100; /* 他の要素の上に表示 */
+        z-index: 10; /* 他の要素の上に表示 */
       }
       .logo img {
         max-width: 150px;
@@ -20,10 +20,10 @@
 
       /* 撮影ボタンのスタイル */
       #capture-btn {
-        position: fixed;
+        position: absolute;
         bottom: 10px;
         left: 10px;
-        z-index: 100;
+        z-index: 10;
         padding: 10px 15px;
         background-color: #007bff;
         color: white;
@@ -48,7 +48,7 @@
 
   <body>
     <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
       <a-assets>
         <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
@@ -79,20 +79,26 @@
       const canvas = document.getElementById('arCanvas');
       const scene = document.querySelector('a-scene');
 
+      // 撮影機能の改善：requestAnimationFrameを使用して正しいフレームをキャプチャ
       captureBtn.addEventListener('click', () => {
         const video = scene.renderer.domElement; // A-Frameのレンダリング内容を取得
-        const context = canvas.getContext('2d');
-        canvas.width = video.width;
-        canvas.height = video.height;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height); // AR表示内容を描画
+        const gl = video.getContext('webgl') || video.getContext('experimental-webgl'); // WebGLコンテキストを取得
 
-        const imageData = canvas.toDataURL('image/png');
-        
-        // キャプチャ画像をダウンロード
-        const link = document.createElement('a');
-        link.href = imageData;
-        link.download = 'capture.png';
-        link.click();
+        // 1フレーム待ってキャプチャする
+        requestAnimationFrame(() => {
+          canvas.width = video.width;
+          canvas.height = video.height;
+          const context = canvas.getContext('2d');
+          context.drawImage(video, 0, 0, canvas.width, canvas.height); // AR表示内容を描画
+
+          const imageData = canvas.toDataURL('image/png');
+          
+          // キャプチャ画像をダウンロード
+          const link = document.createElement('a');
+          link.href = imageData;
+          link.download = 'capture.png';
+          link.click();
+        });
       });
     </script>
   </body>
