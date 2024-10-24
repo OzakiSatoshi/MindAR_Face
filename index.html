@@ -37,7 +37,7 @@
     </div>
 
     <!-- ARシーン -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
@@ -76,7 +76,13 @@
             stream.getTracks().forEach(track => track.stop());
             return true;
           } catch (error) {
-            showError('カメラへのアクセスが拒否されました。ブラウザの設定を確認してください。', false);
+            if (error.name === 'NotReadableError') {
+              showError('カメラは他のアプリケーションまたはタブで使用されています。カメラを閉じて再試行してください。', true);
+            } else if (error.name === 'NotAllowedError') {
+              showError('カメラへのアクセスが拒否されました。ブラウザ設定を確認してください。', false);
+            } else {
+              showError('カメラアクセスに問題が発生しました。', false);
+            }
             throw new Error('カメラアクセスエラー: ' + error.message);
           }
         };
@@ -103,7 +109,6 @@
             await checkModelLoading();
             captureBtn.disabled = false;  // カメラアクセスとモデルのロードが成功したらボタンを有効化
           } catch (error) {
-            showError(error.message);
             captureBtn.disabled = true;
           }
         };
