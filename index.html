@@ -7,10 +7,10 @@
       /* 社名ロゴを画面下部に固定表示 */
       .logo {
         position: fixed;
-        bottom: 60px; /* ボタンとのスペースを確保 */
+        bottom: 80px; /* 撮影ボタンとのスペースを確保 */
         width: 100%;
         text-align: center;
-        z-index: 10; /* ロゴを最前面に表示 */
+        z-index: 10;
         pointer-events: none; /* クリックを無効化 */
       }
       .logo img {
@@ -22,28 +22,25 @@
       /* 撮影ボタンのスタイル */
       #capture-btn {
         position: fixed;
-        bottom: 10px;
-        left: 10px;
+        bottom: 20px; /* ロゴの下に表示 */
+        left: 50%; /* 中央に配置 */
+        transform: translateX(-50%);
         z-index: 20; /* ロゴより前面に表示 */
-        padding: 10px 15px;
-        background-color: #007bff;
-        color: white;
+        padding: 10px;
+        background-color: transparent; /* 背景は透明に設定 */
         border: none;
-        border-radius: 5px;
-        font-size: 14px;
         cursor: pointer;
       }
 
       /* モバイルデバイスの画面サイズに応じて調整 */
       @media (max-width: 768px) {
-        #capture-btn {
-          font-size: 12px;
-          padding: 8px 12px;
-          bottom: 20px; /* スマホでの表示位置を調整 */
-          left: 10px;
-        }
         .logo img {
           max-width: 100px;
+        }
+        #capture-btn {
+          width: 60px; /* モバイル用に撮影ボタンのサイズ調整 */
+          height: 60px;
+          bottom: 30px; /* スペースを調整 */
         }
       }
     </style>
@@ -71,8 +68,10 @@
       <img src="Logo&Font_BackAlpha.png" alt="Company Logo">
     </div>
 
-    <!-- 撮影ボタン -->
-    <button id="capture-btn">撮影</button>
+    <!-- 撮影ボタンをshutter.pngに変更 -->
+    <button id="capture-btn">
+      <img src="shutter.png" alt="Shutter Button" style="width:100%; height:100%;">
+    </button>
 
     <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
