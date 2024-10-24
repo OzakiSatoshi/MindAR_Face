@@ -48,7 +48,7 @@
 
   <body>
     <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
       <a-assets>
         <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
@@ -81,6 +81,8 @@
       navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
         const video = document.getElementById('video');
         video.srcObject = stream;
+      }).catch(function(err) {
+        alert('Failed to access the camera: ' + err.message);
       });
 
       // 撮影ボタンを押した際に現在のAR表示とカメラ映像をキャプチャする機能
@@ -101,18 +103,24 @@
         context.drawImage(videoElement, -canvas.width, 0, canvas.width, canvas.height); // 反転した状態で描画
         context.restore();
 
-        // 2. その上にGLTFモデルを描画
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // 2. その上にGLTFモデルを描画 (WebGL)
+        const gl = scene.renderer.getContext();  // WebGLコンテキストを取得
+        const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4); // ピクセルデータ取得用のバッファ
+        gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+        // WebGLコンテンツをCanvasに描画
+        const imageData = context.createImageData(gl.drawingBufferWidth, gl.drawingBufferHeight);
+        imageData.data.set(pixels);
+        context.putImageData(imageData, 0, 0);
 
         // 3. ロゴを描画
         const logoImg = document.getElementById('logo-img');
         context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10); // ロゴを右下に表示
 
-        const imageData = canvas.toDataURL('image/png');
-        
-        // キャプチャ画像をダウンロード
+        // 4. キャプチャ画像をダウンロード
+        const imageDataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.href = imageData;
+        link.href = imageDataUrl;
         link.download = 'capture.png';
         link.click();
       });
