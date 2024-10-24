@@ -48,7 +48,7 @@
 
   <body>
     <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
       <a-assets>
         <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
@@ -73,65 +73,33 @@
 
     <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
-    <!-- カメラ映像を表示するためのビデオ要素 -->
-    <video id="video" autoplay playsinline style="display:none;"></video>
-
     <script>
-      // カメラ映像を取得
-      navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-        const video = document.getElementById('video');
-        video.srcObject = stream;
-      }).catch(function(err) {
-        alert('Failed to access the camera: ' + err.message);
-      });
-
-      // 撮影ボタンを押した際に現在のAR表示とカメラ映像をキャプチャする機能
       const captureBtn = document.getElementById('capture-btn');
       const canvas = document.getElementById('arCanvas');
-      const videoElement = document.getElementById('video');
-      const scene = document.querySelector('a-scene');
+      const scene = document.getElementById('ar-scene');
+      const logoImg = document.getElementById('logo-img');
 
       captureBtn.addEventListener('click', () => {
-        const video = scene.renderer.domElement; // A-Frameのレンダリング内容を取得
+        const renderer = scene.renderer;
+        const videoElement = renderer.domElement;
         const context = canvas.getContext('2d');
-        canvas.width = video.width;
-        canvas.height = video.height;
-
-        // 1. キャンバスにカメラ映像を描画 (左右反転を防ぐ)
-        context.save();
-        context.scale(-1, 1); // 左右反転を修正
-        context.drawImage(videoElement, -canvas.width, 0, canvas.width, canvas.height); // 反転した状態で描画
-        context.restore();
-
-        // 2. WebGLコンテンツをCanvasに描画
-        const gl = scene.renderer.getContext();  // WebGLコンテキストを取得
-        const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4); // ピクセルデータ取得用のバッファ
-        gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        
+        // Canvasのサイズを設定
+        canvas.width = videoElement.width;
+        canvas.height = videoElement.height;
 
         // WebGLコンテンツをキャンバスに描画
-        const imageData = context.createImageData(gl.drawingBufferWidth, gl.drawingBufferHeight);
-        imageData.data.set(pixels);
-        context.putImageData(imageData, 0, 0);
+        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-        // 3. ロゴを描画
-        const logoImg = document.getElementById('logo-img');
-        context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10); // ロゴを右下に表示
+        // ロゴをキャンバスに描画
+        context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10);
 
-        // 4. キャプチャ画像をダウンロード
+        // キャプチャ画像をダウンロード
         const imageDataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = imageDataUrl;
         link.download = 'capture.png';
         link.click();
-      });
-
-      // PCブラウザでARが動作しない問題の対策 (カメラアクセス許可の確認)
-      window.addEventListener('load', () => {
-        if (navigator.userAgent.indexOf("Mobile") === -1) {
-          navigator.mediaDevices.getUserMedia({ video: true }).catch(function(error) {
-            alert('Camera access is required to use this AR feature on PC.');
-          });
-        }
       });
     </script>
   </body>
