@@ -10,7 +10,7 @@
         bottom: 10px; /* 画面の下部に表示 */
         left: 50%;
         transform: translateX(-50%);
-        z-index: 10; /* ロゴを最前面に表示 */
+        z-index: 1000; /* 他の要素よりも前に表示 */
         pointer-events: none; /* クリックを無効化 */
       }
       .logo img {
@@ -24,7 +24,7 @@
         position: fixed;
         bottom: 10px; /* 画面下部に配置 */
         left: 10px; /* 画面の左端に配置 */
-        z-index: 20; /* ロゴより前面に表示 */
+        z-index: 1001; /* ロゴより前面に表示 */
         padding: 10px;
         background-color: transparent; /* 背景は透明に設定 */
         border: none;
