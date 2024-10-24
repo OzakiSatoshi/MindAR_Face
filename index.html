@@ -5,19 +5,6 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
-      .status-container {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        display: none;
-      }
-
       .error-container {
         position: fixed;
         top: 50%;
@@ -43,15 +30,13 @@
     </style>
   </head>
   <body>
-    <div class="status-container" id="statusContainer">
-      <span id="statusText">初期化中...</span>
-    </div>
-
+    <!-- エラー表示 -->
     <div class="error-container" id="errorContainer">
       <div id="errorMessage"></div>
       <button id="retryButton">再試行</button>
     </div>
 
+    <!-- ARシーン -->
     <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
@@ -64,55 +49,24 @@
       </a-entity>
     </a-scene>
 
+    <!-- キャプチャ用ボタン -->
     <button id="capture-btn" disabled>撮影</button>
 
     <canvas id="arCanvas" style="display:none;"></canvas>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        const state = {
-          isARReady: false,
-          isCameraReady: false,
-          isModelLoaded: false,
-          lastCaptureTime: 0,
-          errorCount: 0,
-          maxRetries: 3
-        };
-
-        const statusContainer = document.getElementById('statusContainer');
-        const statusText = document.getElementById('statusText');
         const errorContainer = document.getElementById('errorContainer');
         const errorMessage = document.getElementById('errorMessage');
         const retryButton = document.getElementById('retryButton');
         const scene = document.querySelector('a-scene');
         const captureBtn = document.getElementById('capture-btn');
 
-        // ステータス表示
-        const showStatus = (message, duration = 0) => {
-          statusContainer.style.display = 'block';
-          statusText.textContent = message;
-          if (duration > 0) {
-            setTimeout(() => {
-              statusContainer.style.display = 'none';
-            }, duration);
-          }
-        };
-
         // エラー表示
         const showError = (message, isRetryable = true) => {
           errorMessage.textContent = message;
           retryButton.style.display = isRetryable ? 'block' : 'none';
           errorContainer.style.display = 'block';
-        };
-
-        // システムの要件確認
-        const checkSystemRequirements = async () => {
-          try {
-            await checkCameraAccess();
-            await checkModelLoading();
-          } catch (error) {
-            throw new Error('システム要件の確認に失敗しました');
-          }
         };
 
         // カメラアクセス確認
@@ -139,18 +93,15 @@
         // リトライ処理
         retryButton.addEventListener('click', async () => {
           errorContainer.style.display = 'none';
-          state.errorCount = 0;
           await initARScene();
         });
 
         // 初期化
         const initARScene = async () => {
           try {
-            showStatus('AR初期化中...');
-            await checkSystemRequirements();
-            state.isARReady = true;
-            showStatus('準備完了', 2000);
-            captureBtn.disabled = false;
+            await checkCameraAccess();
+            await checkModelLoading();
+            captureBtn.disabled = false;  // カメラアクセスとモデルのロードが成功したらボタンを有効化
           } catch (error) {
             showError(error.message);
             captureBtn.disabled = true;
