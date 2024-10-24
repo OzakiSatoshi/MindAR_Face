@@ -1,89 +1,168 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script> <!-- html2canvasを読み込む -->
     <style>
-      /* 社名ロゴを画面下部に固定表示 */
-      .logo {
-        position: absolute;
-        bottom: 10px;
-        width: 100%;
-        text-align: center;
-        z-index: 10;
-      }
-      .logo img {
-        max-width: 150px;
-        width: 30%;
-        height: auto;
+      /* ステータス表示用のスタイル */
+      .status-container {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: none;
       }
 
-      /* 撮影ボタンのスタイル */
-      #capture-btn {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 10;
-        padding: 10px 15px;
-        background-color: #007bff;
+      /* エラー表示のスタイル */
+      .error-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 0, 0, 0.9);
         color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1001;
+        display: none;
+      }
+
+      .error-container button {
+        margin-top: 10px;
+        padding: 5px 10px;
+        background: white;
         border: none;
         border-radius: 5px;
-        font-size: 14px;
         cursor: pointer;
-      }
-
-      /* モバイルデバイスの画面サイズに応じて調整 */
-      @media (max-width: 768px) {
-        #capture-btn {
-          font-size: 12px;
-          padding: 8px 12px;
-        }
-        .logo img {
-          max-width: 100px;
-        }
       }
     </style>
   </head>
-
   <body>
-    <!-- MindARのシーン設定 -->
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, useLegacyLights: false" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="capture-area">
+    <!-- ステータス表示 -->
+    <div class="status-container" id="statusContainer">
+      <span id="statusText">初期化中...</span>
+    </div>
+
+    <!-- エラー表示 -->
+    <div class="error-container" id="errorContainer">
+      <div id="errorMessage"></div>
+      <button id="retryButton">再試行</button>
+    </div>
+
+    <!-- ARシーン -->
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;" id="ar-scene">
       <a-assets>
-        <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- カメラ設定 -->
       <a-camera active="false" position="0 0 0"></a-camera>
 
-      <!-- 複数トラッキングを有効にするエンティティ -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <!-- 社名ロゴ -->
-    <div class="logo">
-      <img id="logo-img" src="Logo&Font_BackAlpha.png" alt="Company Logo">
-    </div>
+    <!-- キャプチャ用ボタン -->
+    <button id="capture-btn" disabled>撮影</button>
 
-    <!-- 撮影ボタン -->
-    <button id="capture-btn">撮影</button>
+    <canvas id="arCanvas" style="display:none;"></canvas>
 
     <script>
-      const captureBtn = document.getElementById('capture-btn');
-      const captureArea = document.getElementById('capture-area');
+      document.addEventListener('DOMContentLoaded', () => {
+        const state = {
+          isARReady: false,
+          isCameraReady: false,
+          isModelLoaded: false,
+          lastCaptureTime: 0,
+          errorCount: 0,
+          maxRetries: 3
+        };
 
-      captureBtn.addEventListener('click', () => {
-        // スクリーンショットを撮る
-        html2canvas(captureArea).then(function(canvas) {
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = 'capture.png';
-          link.click();
+        const statusContainer = document.getElementById('statusContainer');
+        const statusText = document.getElementById('statusText');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const retryButton = document.getElementById('retryButton');
+        const scene = document.querySelector('a-scene');
+        const captureBtn = document.getElementById('capture-btn');
+
+        // ステータス表示
+        const showStatus = (message, duration = 0) => {
+          statusContainer.style.display = 'block';
+          statusText.textContent = message;
+          if (duration > 0) {
+            setTimeout(() => {
+              statusContainer.style.display = 'none';
+            }, duration);
+          }
+        };
+
+        // エラー表示
+        const showError = (message, isRetryable = true) => {
+          errorMessage.textContent = message;
+          retryButton.style.display = isRetryable ? 'block' : 'none';
+          errorContainer.style.display = 'block';
+        };
+
+        // システムの要件確認
+        const checkSystemRequirements = async () => {
+          try {
+            await checkCameraAccess();
+            await checkModelLoading();
+          } catch (error) {
+            throw new Error('システム要件の確認に失敗しました');
+          }
+        };
+
+        // カメラアクセス確認
+        const checkCameraAccess = async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(track => track.stop());
+            return true;
+          } catch (error) {
+            throw new Error('カメラへのアクセスが拒否されました。');
+          }
+        };
+
+        // モデルロード確認
+        const checkModelLoading = async () => {
+          const model = document.querySelector('a-gltf-model');
+          return new Promise((resolve, reject) => {
+            model.addEventListener('model-loaded', () => resolve(true));
+            model.addEventListener('model-error', () => reject(false));
+          });
+        };
+
+        // リトライ処理
+        retryButton.addEventListener('click', async () => {
+          errorContainer.style.display = 'none';
+          state.errorCount = 0;
+          await initARScene();
         });
+
+        // 初期化
+        const initARScene = async () => {
+          try {
+            showStatus('AR初期化中...');
+            await checkSystemRequirements();
+            state.isARReady = true;
+            showStatus('準備完了', 2000);
+            captureBtn.disabled = false;
+          } catch (error) {
+            showError(error.message);
+            captureBtn.disabled = true;
+          }
+        };
+
+        initARScene();
       });
     </script>
   </body>
