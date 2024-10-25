@@ -7,7 +7,7 @@
       /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
         z-index: 0 !important; /* WebGLの最前面表示を防ぐ */
-        position: fixed !important; /* 画面全体に固定表示 */
+        position: fixed !important;
         top: 0;
         left: 0;
         width: 100%;
@@ -58,7 +58,7 @@
   <body>
     <!-- MindARのシーン設定 -->
     <a-scene mindar-face embedded color-space="sRGB" 
-             renderer="colorManagement: true, physicallyCorrectLights, alpha: true" 
+             renderer="colorManagement: true, alpha: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
       <a-assets>
@@ -67,9 +67,9 @@
       </a-assets>
 
       <!-- カメラ設定 -->
-      <a-camera active="false" position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-camera active="false" position="0 0 0"></a-camera>
 
-      <!-- 複数トラッキングを有効にするエンティティ -->
+      <!-- トラッキング用エンティティ -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
