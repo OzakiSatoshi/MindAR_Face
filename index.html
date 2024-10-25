@@ -7,11 +7,6 @@
       /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
         z-index: 0 !important; /* WebGLの最前面表示を防ぐ */
-      }
-
-      /* ARシーン全体のスタイル */
-      a-scene {
-        z-index: 0 !important; /* シーンが前面に出ないようにする */
         position: fixed !important; /* 画面全体に固定表示 */
         top: 0;
         left: 0;
@@ -26,7 +21,7 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 9999 !important; /* ロゴを前面に表示 */
-        pointer-events: none; /* クリックを無効化 */
+        pointer-events: none; /* ロゴがクリックされないように */
       }
       .logo img {
         max-width: 150px;
@@ -93,6 +88,14 @@
     <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
     <script>
+      // A-Frameのレンダリング後にキャンバスに対してz-indexを適用する処理
+      document.querySelector('a-scene').addEventListener('loaded', function () {
+        const aframeCanvas = document.querySelector('.a-canvas');
+        if (aframeCanvas) {
+          aframeCanvas.style.zIndex = '0'; // シーンが他の要素の後ろに表示されるように設定
+        }
+      });
+
       // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
       const captureBtn = document.getElementById('capture-btn');
       const canvas = document.getElementById('arCanvas');
