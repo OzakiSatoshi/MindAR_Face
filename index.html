@@ -116,14 +116,19 @@
       captureBtn.addEventListener('click', () => {
         const renderer = scene.renderer; // A-Frameのレンダラー
 
-        // 1. WebGLコンテンツをキャプチャ
+        // 1. レンダリングを強制的に実行
+        renderer.render(scene, scene.camera);
+
+        // 2. WebGLコンテンツをキャプチャ
         captureWebGLContent(renderer, canvas);
 
-        // 2. ロゴをキャンバスに描画
+        // 3. ロゴをキャンバスに描画
         const context = canvas.getContext('2d');
-        context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10);
+        const logoWidth = logoImg.width;
+        const logoHeight = logoImg.height;
+        context.drawImage(logoImg, (canvas.width - logoWidth) / 2, (canvas.height - logoHeight) / 2);
 
-        // 3. キャプチャ画像を生成してダウンロード
+        // 4. キャプチャ画像を生成してダウンロード
         const imageData = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = imageData;
