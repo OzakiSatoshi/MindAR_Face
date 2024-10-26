@@ -85,7 +85,7 @@
 
       // WebGLからピクセルを読み取るための関数
       function captureWebGLContent(renderer, canvas) {
-        const gl = renderer.getContext(); // WebGLコンテキスト取得
+        const gl = renderer.getContext();
         const width = gl.drawingBufferWidth;
         const height = gl.drawingBufferHeight;
         const pixels = new Uint8Array(width * height * 4);
@@ -100,8 +100,8 @@
 
         // Y軸を反転して描画
         context.save();
-        context.scale(1, -1);  // Y軸を反転
-        context.drawImage(gl.canvas, 0, -canvas.height); // 上下逆さまを修正
+        context.scale(1, -1);
+        context.drawImage(gl.canvas, 0, -canvas.height);
         context.restore();
       }
 
@@ -110,21 +110,21 @@
         const renderer = scene.renderer;
 
         if (renderer && scene.camera) {
-          // 1. レンダリングが可能な場合に強制的に実行
+          // レンダリングが可能な場合に強制的に実行
           requestAnimationFrame(() => {
             try {
               renderer.render(scene.object3D, scene.camera);
 
-              // 2. WebGLコンテンツをキャプチャ
+              // WebGLコンテンツをキャプチャ
               captureWebGLContent(renderer, canvas);
 
-              // 3. ロゴをキャンバスに描画
+              // ロゴをキャンバスに描画
               const context = canvas.getContext('2d');
               const logoWidth = logoImg.width;
               const logoHeight = logoImg.height;
               context.drawImage(logoImg, (canvas.width - logoWidth) / 2, (canvas.height - logoHeight) / 2);
 
-              // 4. キャプチャ画像を生成してダウンロード
+              // キャプチャ画像を生成してダウンロード
               const imageData = canvas.toDataURL('image/png');
               const link = document.createElement('a');
               link.href = imageData;
