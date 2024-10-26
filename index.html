@@ -4,7 +4,6 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
-      /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
         z-index: 0 !important;
         position: absolute !important;
@@ -14,7 +13,6 @@
         height: 100%;
       }
 
-      /* ロゴのスタイルを設定して最前面に表示 */
       .logo {
         position: absolute;
         bottom: 10px;
@@ -29,7 +27,6 @@
         height: auto;
       }
 
-      /* 撮影ボタンのスタイルを設定して最前面に表示 */
       #capture-btn {
         position: absolute;
         bottom: 10px;
@@ -41,7 +38,6 @@
         cursor: pointer;
       }
 
-      /* モバイルデバイスの画面サイズに応じた調整 */
       @media (max-width: 768px) {
         .logo img {
           max-width: 100px;
@@ -56,36 +52,30 @@
   </head>
 
   <body>
-    <!-- MindARのシーン設定 -->
     <a-scene mindar-face embedded color-space="sRGB" 
              renderer="colorManagement: true, alpha: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
       <a-assets>
-        <!-- GLTFモデルをロード -->
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- カメラ設定 -->
       <a-camera active="false" position="0 0 0"></a-camera>
 
-      <!-- トラッキング用エンティティ -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <!-- 社名ロゴ -->
     <div class="logo">
       <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
     </div>
 
-    <!-- 撮影ボタン -->
     <button id="capture-btn">
       <img src="./shutter.png" alt="Shutter Button" style="width:100%; height:100%;">
     </button>
 
-    <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
+    <canvas id="arCanvas" style="display:none;"></canvas>
 
     <script>
       const captureBtn = document.getElementById('capture-btn');
@@ -94,50 +84,53 @@
       const logoImg = document.getElementById('logo-img');
 
       // WebGLからピクセルを読み取るための関数
-      function captureWebGLContent(sceneRenderer, canvas) {
-        const gl = sceneRenderer.getContext(); // WebGLコンテキスト取得
+      function captureWebGLContent(renderer, canvas) {
+        const gl = renderer.getContext(); // WebGLコンテキスト取得
         const width = gl.drawingBufferWidth;
         const height = gl.drawingBufferHeight;
-        const pixels = new Uint8Array(width * height * 4); // ピクセルデータ用バッファ
+        const pixels = new Uint8Array(width * height * 4);
 
-        // WebGLの内容をピクセル単位で取得
         gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
         const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
         const context = canvas.getContext('2d');
         canvas.width = width;
         canvas.height = height;
-
-        // WebGLの内容をキャンバスに描画
         context.putImageData(imageData, 0, 0);
       }
 
       // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
       captureBtn.addEventListener('click', () => {
-        const renderer = scene.renderer; // A-Frameのレンダラー
+        const renderer = scene.renderer;
 
-        // 1. レンダリングを強制的に実行
-        renderer.render(scene, scene.camera);
+        if (renderer && scene.camera) {
+          // 1. レンダリングが可能な場合に強制的に実行
+          requestAnimationFrame(() => {
+            try {
+              renderer.render(scene.object3D, scene.camera); // 正しいオブジェクトを渡す
 
-        // 2. WebGLコンテンツをキャプチャ
-        captureWebGLContent(renderer, canvas);
+              // 2. WebGLコンテンツをキャプチャ
+              captureWebGLContent(renderer, canvas);
 
-        // 3. ロゴをキャンバスに描画
-        const context = canvas.getContext('2d');
-        const logoWidth = logoImg.width;
-        const logoHeight = logoImg.height;
-        context.drawImage(logoImg, (canvas.width - logoWidth) / 2, (canvas.height - logoHeight) / 2);
+              // 3. ロゴをキャンバスに描画
+              const context = canvas.getContext('2d');
+              const logoWidth = logoImg.width;
+              const logoHeight = logoImg.height;
+              context.drawImage(logoImg, (canvas.width - logoWidth) / 2, (canvas.height - logoHeight) / 2);
 
-        // 4. キャプチャ画像を生成してダウンロード
-        const imageData = canvas.toDataURL('image/png');
-        
-        // Debug: データURLの内容を確認
-        console.log(imageData);
-
-        const link = document.createElement('a');
-        link.href = imageData;
-        link.download = 'capture.png';
-        link.click();
+              // 4. キャプチャ画像を生成してダウンロード
+              const imageData = canvas.toDataURL('image/png');
+              const link = document.createElement('a');
+              link.href = imageData;
+              link.download = 'capture.png';
+              link.click();
+            } catch (error) {
+              console.error("Render error:", error);
+            }
+          });
+        } else {
+          console.error("Renderer or camera is not available for rendering.");
+        }
       });
     </script>
   </body>
