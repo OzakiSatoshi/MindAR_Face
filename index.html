@@ -96,60 +96,62 @@
           console.error('Error accessing the camera', error);
         });
 
-      // キャプチャボタンのイベントリスナーを修正
-      captureBtn.addEventListener('click', async () => {
+      // WebGLとカメラ映像を合成して描画するための関数
+      function captureWebGLAndVideo(renderer, canvas) {
+        try {
+          const gl = renderer.getContext();
+          const width = gl.drawingBufferWidth;
+          const height = gl.drawingBufferHeight;
+
+          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = width;
+          tempCanvas.height = height;
+          const tempContext = tempCanvas.getContext('2d');
+
+          // カメラ映像を描画
+          tempContext.drawImage(video, 0, 0, width, height);
+
+          // WebGLの内容を描画（Y軸を反転）
+          const pixels = new Uint8Array(width * height * 4);
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+
+          // Y軸を反転してWebGLコンテンツを合成
+          tempContext.save();
+          tempContext.scale(1, -1);
+          tempContext.putImageData(imageData, 0, -height);
+          tempContext.restore();
+
+          // 最終的にメインキャンバスに合成
+          const context = canvas.getContext('2d');
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(tempCanvas, 0, 0);
+
+        } catch (error) {
+          console.error("Error during WebGL and video capture", error);
+        }
+      }
+
+      // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
+      captureBtn.addEventListener('click', () => {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
           const renderer = scene.renderer;
 
           if (renderer && scene.camera) {
-            // ロゴ画像の読み込みを待つ
-            await new Promise((resolve) => {
-              if (logoImg.complete) {
-                resolve();
-              } else {
-                logoImg.onload = resolve;
-              }
-            });
-
-            // MindARのレンダリングサイクルと同期を取る
-            scene.renderer.setAnimationLoop(() => {
+            requestAnimationFrame(() => {
               try {
-                const gl = renderer.getContext();
-                const width = gl.drawingBufferWidth;
-                const height = gl.drawingBufferHeight;
+                // WebGLとカメラ映像を合成して描画
+                captureWebGLAndVideo(renderer, canvas);
 
-                canvas.width = width;
-                canvas.height = height;
+                // ロゴをキャンバスに描画（中央に配置）
                 const context = canvas.getContext('2d');
-
-                // カメラ映像を描画
-                context.drawImage(video, 0, 0, width, height);
-
-                // WebGLの内容を取得
-                const pixels = new Uint8Array(width * height * 4);
-                gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-                // 一時キャンバスを作成してWebGL内容を描画
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = width;
-                tempCanvas.height = height;
-                const tempContext = tempCanvas.getContext('2d');
-                const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-
-                // WebGL内容を反転して描画
-                tempContext.putImageData(imageData, 0, 0);
-                tempContext.scale(1, -1);
-                tempContext.drawImage(tempCanvas, 0, -height);
-
-                // メインキャンバスに合成
-                context.drawImage(tempCanvas, 0, 0);
-
-                // ロゴを中央に描画
-                const logoWidth = Math.min(150, width * 0.3); // 最大幅を制限
-                const logoHeight = (logoWidth / logoImg.width) * logoImg.height;
-                const x = (width - logoWidth) / 2;
-                const y = height - logoHeight - 10; // 下部に配置
-                context.drawImage(logoImg, x, y, logoWidth, logoHeight);
+                const logoWidth = logoImg.width;
+                const logoHeight = logoImg.height;
+                const x = (canvas.width - logoWidth) / 2;
+                const y = (canvas.height - logoHeight) / 2;
+                context.drawImage(logoImg, x, y);
 
                 // キャプチャ画像を生成してダウンロード
                 const imageData = canvas.toDataURL('image/png');
@@ -157,12 +159,8 @@
                 link.href = imageData;
                 link.download = 'capture.png';
                 link.click();
-
-                // キャプチャ後にアニメーションループを停止
-                scene.renderer.setAnimationLoop(null);
               } catch (error) {
                 console.error("Render error:", error);
-                scene.renderer.setAnimationLoop(null);
               }
             });
           } else {
