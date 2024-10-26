@@ -6,7 +6,7 @@
     <style>
       /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
-        z-index: 0 !important; /* WebGLの最前面表示を防ぐ */
+        z-index: 0 !important;
         position: absolute !important;
         top: 0;
         left: 0;
@@ -16,12 +16,12 @@
 
       /* ロゴのスタイルを設定して最前面に表示 */
       .logo {
-        position: absolute; /* fixedからabsoluteに変更 */
+        position: absolute;
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 9999 !important; /* ロゴを前面に表示 */
-        pointer-events: none; /* ロゴがクリックされないように */
+        z-index: 9999 !important;
+        pointer-events: none;
       }
       .logo img {
         max-width: 150px;
@@ -31,10 +31,10 @@
 
       /* 撮影ボタンのスタイルを設定して最前面に表示 */
       #capture-btn {
-        position: absolute; /* fixedからabsoluteに変更 */
+        position: absolute;
         bottom: 10px;
         left: 10px;
-        z-index: 10000 !important; /* 撮影ボタンを前面に表示 */
+        z-index: 10000 !important;
         padding: 10px;
         background-color: transparent;
         border: none;
@@ -88,33 +88,39 @@
     <canvas id="arCanvas" style="display:none;"></canvas> <!-- キャプチャ用の非表示キャンバス -->
 
     <script>
-      // A-Frameのレンダリング後にキャンバスに対してz-indexを適用する処理
-      document.querySelector('a-scene').addEventListener('loaded', function () {
-        const aframeCanvas = document.querySelector('.a-canvas');
-        if (aframeCanvas) {
-          aframeCanvas.style.zIndex = '0'; // シーンが他の要素の後ろに表示されるように設定
-        }
-      });
-
-      // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
       const captureBtn = document.getElementById('capture-btn');
       const canvas = document.getElementById('arCanvas');
       const scene = document.querySelector('a-scene');
       const logoImg = document.getElementById('logo-img');
 
-      captureBtn.addEventListener('click', () => {
-        // A-FrameのシーンのWebGLコンテンツを取得
-        const video = scene.renderer.domElement;
+      // WebGLからピクセルを読み取るための関数
+      function captureWebGLContent(sceneRenderer, canvas) {
+        const gl = sceneRenderer.getContext(); // WebGLコンテキスト取得
+        const width = gl.drawingBufferWidth;
+        const height = gl.drawingBufferHeight;
+        const pixels = new Uint8Array(width * height * 4); // ピクセルデータ用バッファ
+
+        // WebGLの内容をピクセル単位で取得
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+        const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
         const context = canvas.getContext('2d');
+        canvas.width = width;
+        canvas.height = height;
 
-        // キャンバスのサイズをA-Frameシーンに合わせる
-        canvas.width = video.width;
-        canvas.height = video.height;
+        // WebGLの内容をキャンバスに描画
+        context.putImageData(imageData, 0, 0);
+      }
 
-        // 1. WebGLの描画内容をキャンバスに描画
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
+      captureBtn.addEventListener('click', () => {
+        const renderer = scene.renderer; // A-Frameのレンダラー
+
+        // 1. WebGLコンテンツをキャプチャ
+        captureWebGLContent(renderer, canvas);
 
         // 2. ロゴをキャンバスに描画
+        const context = canvas.getContext('2d');
         context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10);
 
         // 3. キャプチャ画像を生成してダウンロード
