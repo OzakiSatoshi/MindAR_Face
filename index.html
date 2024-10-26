@@ -98,35 +98,40 @@
 
       // WebGLとカメラ映像を合成して描画するための関数
       function captureWebGLAndVideo(renderer, canvas) {
-        const gl = renderer.getContext();
-        const width = gl.drawingBufferWidth;
-        const height = gl.drawingBufferHeight;
+        try {
+          const gl = renderer.getContext();
+          const width = gl.drawingBufferWidth;
+          const height = gl.drawingBufferHeight;
 
-        // 一時キャンバスを作成して、Y軸を反転
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempContext = tempCanvas.getContext('2d');
+          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = width;
+          tempCanvas.height = height;
+          const tempContext = tempCanvas.getContext('2d');
 
-        // カメラ映像を描画（Y軸を反転しない）
-        tempContext.drawImage(video, 0, 0, width, height);
+          // カメラ映像を描画
+          tempContext.drawImage(video, 0, 0, width, height);
 
-        // WebGLの内容を描画（Y軸を反転）
-        const pixels = new Uint8Array(width * height * 4);
-        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+          // WebGLの内容を描画（Y軸を反転）
+          const pixels = new Uint8Array(width * height * 4);
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
-        // Y軸を反転してWebGLコンテンツを合成
-        tempContext.save();
-        tempContext.scale(1, -1);
-        tempContext.putImageData(imageData, 0, -height);
-        tempContext.restore();
+          // Y軸を反転してWebGLコンテンツを合成
+          tempContext.save();
+          tempContext.scale(1, -1);
+          tempContext.putImageData(imageData, 0, -height);
+          tempContext.restore();
 
-        // 最終的にメインキャンバスに合成
-        const context = canvas.getContext('2d');
-        canvas.width = width;
-        canvas.height = height;
-        context.drawImage(tempCanvas, 0, 0);
+          // 最終的にメインキャンバスに合成
+          const context = canvas.getContext('2d');
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(tempCanvas, 0, 0);
+
+        } catch (error) {
+          console.error("Error during WebGL and video capture", error);
+        }
       }
 
       // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
@@ -140,11 +145,13 @@
                 // WebGLとカメラ映像を合成して描画
                 captureWebGLAndVideo(renderer, canvas);
 
-                // ロゴをキャンバスに描画
+                // ロゴをキャンバスに描画（中央に配置）
                 const context = canvas.getContext('2d');
                 const logoWidth = logoImg.width;
                 const logoHeight = logoImg.height;
-                context.drawImage(logoImg, (canvas.width - logoWidth) / 2, (canvas.height - logoHeight) / 2);
+                const x = (canvas.width - logoWidth) / 2;
+                const y = (canvas.height - logoHeight) / 2;
+                context.drawImage(logoImg, x, y);
 
                 // キャプチャ画像を生成してダウンロード
                 const imageData = canvas.toDataURL('image/png');
