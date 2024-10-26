@@ -130,6 +130,10 @@
 
         // 4. キャプチャ画像を生成してダウンロード
         const imageData = canvas.toDataURL('image/png');
+        
+        // Debug: データURLの内容を確認
+        console.log(imageData);
+
         const link = document.createElement('a');
         link.href = imageData;
         link.download = 'capture.png';
