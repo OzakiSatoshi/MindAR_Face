@@ -90,13 +90,19 @@
         const height = gl.drawingBufferHeight;
         const pixels = new Uint8Array(width * height * 4);
 
+        // WebGLの内容をピクセル単位で取得
         gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
         const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
         const context = canvas.getContext('2d');
         canvas.width = width;
         canvas.height = height;
-        context.putImageData(imageData, 0, 0);
+
+        // Y軸を反転して描画
+        context.save();
+        context.scale(1, -1);  // Y軸を反転
+        context.drawImage(gl.canvas, 0, -canvas.height); // 上下逆さまを修正
+        context.restore();
       }
 
       // 撮影ボタンを押した際に現在のAR表示をキャプチャする機能
@@ -107,7 +113,7 @@
           // 1. レンダリングが可能な場合に強制的に実行
           requestAnimationFrame(() => {
             try {
-              renderer.render(scene.object3D, scene.camera); // 正しいオブジェクトを渡す
+              renderer.render(scene.object3D, scene.camera);
 
               // 2. WebGLコンテンツをキャプチャ
               captureWebGLContent(renderer, canvas);
