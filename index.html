@@ -7,7 +7,7 @@
       /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
         z-index: 0 !important; /* WebGLの最前面表示を防ぐ */
-        position: fixed !important;
+        position: absolute !important; /* fixedからabsoluteに変更 */
         top: 0;
         left: 0;
         width: 100%;
@@ -16,7 +16,7 @@
 
       /* ロゴのスタイルを設定して最前面に表示 */
       .logo {
-        position: fixed;
+        position: absolute; /* fixedからabsoluteに変更 */
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
@@ -31,7 +31,7 @@
 
       /* 撮影ボタンのスタイルを設定して最前面に表示 */
       #capture-btn {
-        position: fixed;
+        position: absolute; /* fixedからabsoluteに変更 */
         bottom: 10px;
         left: 10px;
         z-index: 10000 !important; /* 撮影ボタンを前面に表示 */
