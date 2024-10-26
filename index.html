@@ -7,7 +7,7 @@
       /* A-Frameのcanvas要素に対するスタイル */
       .a-canvas {
         z-index: 0 !important; /* WebGLの最前面表示を防ぐ */
-        position: absolute !important; /* fixedからabsoluteに変更 */
+        position: absolute !important;
         top: 0;
         left: 0;
         width: 100%;
@@ -77,7 +77,7 @@
 
     <!-- 社名ロゴ -->
     <div class="logo">
-      <img src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
+      <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
     </div>
 
     <!-- 撮影ボタン -->
@@ -100,16 +100,25 @@
       const captureBtn = document.getElementById('capture-btn');
       const canvas = document.getElementById('arCanvas');
       const scene = document.querySelector('a-scene');
+      const logoImg = document.getElementById('logo-img');
 
       captureBtn.addEventListener('click', () => {
-        const video = scene.renderer.domElement; // A-Frameのビデオストリームを取得
+        // A-FrameのシーンのWebGLコンテンツを取得
+        const video = scene.renderer.domElement;
         const context = canvas.getContext('2d');
+
+        // キャンバスのサイズをA-Frameシーンに合わせる
         canvas.width = video.width;
         canvas.height = video.height;
+
+        // 1. WebGLの描画内容をキャンバスに描画
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // 2. ロゴをキャンバスに描画
+        context.drawImage(logoImg, canvas.width - logoImg.width - 10, canvas.height - logoImg.height - 10);
+
+        // 3. キャプチャ画像を生成してダウンロード
         const imageData = canvas.toDataURL('image/png');
-        
-        // キャプチャ画像をダウンロード
         const link = document.createElement('a');
         link.href = imageData;
         link.download = 'capture.png';
