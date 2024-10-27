@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -57,7 +56,7 @@
     <video id="video" autoplay playsinline style="display:none;"></video>
 
     <a-scene mindar-face embedded color-space="sRGB" 
-             renderer="colorManagement: true, alpha: true, preserveDrawingBuffer: true" 
+             renderer="colorManagement: true, alpha: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
       <a-assets>
@@ -97,61 +96,79 @@
           console.error('Error accessing the camera', error);
         });
 
-      // シーンが完全に読み込まれるのを待つ
-      scene.addEventListener('loaded', () => {
-        // ARシステムの準備完了を待つ
-        const sceneEl = document.querySelector('a-scene');
-        const arSystem = sceneEl.systems['mindar-face-system'];
+      // WebGLとカメラ映像を合成して描画するための関数
+      function captureWebGLAndVideo(renderer, canvas) {
+        try {
+          const gl = renderer.getContext();
+          const width = gl.drawingBufferWidth;
+          const height = gl.drawingBufferHeight;
 
-        // 撮影ボタンのイベントリスナー
-        captureBtn.addEventListener('click', async () => {
-          if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-            console.log("Waiting for video data...");
-            return;
+          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = width;
+          tempCanvas.height = height;
+          const tempContext = tempCanvas.getContext('2d');
+
+          // カメラ映像を描画
+          tempContext.drawImage(video, 0, 0, width, height);
+
+          // WebGLの内容を描画（Y軸を反転）
+          const pixels = new Uint8Array(width * height * 4);
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+
+          // Y軸を反転してWebGLコンテンツを合成
+          tempContext.save();
+          tempContext.scale(1, -1);
+          tempContext.putImageData(imageData, 0, -height);
+          tempContext.restore();
+
+          // 最終的にメインキャンバスに合成
+          const context = canvas.getContext('2d');
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(tempCanvas, 0, 0);
+
+        } catch (error) {
+          console.error("Error during WebGL and video capture", error);
+        }
+      }
+
+      // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
+      captureBtn.addEventListener('click', () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          const renderer = scene.renderer;
+
+          if (renderer && scene.camera) {
+            requestAnimationFrame(() => {
+              try {
+                // WebGLとカメラ映像を合成して描画
+                captureWebGLAndVideo(renderer, canvas);
+
+                // ロゴをキャンバスに描画（中央に配置）
+                const context = canvas.getContext('2d');
+                const logoWidth = logoImg.width;
+                const logoHeight = logoImg.height;
+                const x = (canvas.width - logoWidth) / 2;
+                const y = (canvas.height - logoHeight) / 2;
+                context.drawImage(logoImg, x, y);
+
+                // キャプチャ画像を生成してダウンロード
+                const imageData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = 'capture.png';
+                link.click();
+              } catch (error) {
+                console.error("Render error:", error);
+              }
+            });
+          } else {
+            console.error("Renderer or camera is not available for rendering.");
           }
-
-          try {
-            // ARシステムが顔を追跡中か確認
-            if (!arSystem.isTracking) {
-              console.log("No face detected");
-              return;
-            }
-
-            const renderer = scene.renderer;
-            const camera = scene.camera;
-
-            // シーンをレンダリング
-            renderer.preserveDrawingBuffer = true; // WebGLバッファを保持
-            renderer.render(scene.object3D, camera);
-
-            // カメラ映像とARを合成
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-
-            // 1. カメラ映像を描画
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // 2. WebGL (AR) コンテンツを合成
-            ctx.drawImage(renderer.domElement, 0, 0, canvas.width, canvas.height);
-
-            // 3. ロゴを追加
-            const logoWidth = canvas.width * 0.3; // ロゴサイズを画面の30%に
-            const logoHeight = (logoWidth * logoImg.height) / logoImg.width;
-            const logoX = (canvas.width - logoWidth) / 2;
-            const logoY = canvas.height - logoHeight - 10;
-            ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
-
-            // 画像として保存
-            const imageData = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = imageData;
-            link.download = 'ar-capture.png';
-            link.click();
-          } catch (error) {
-            console.error("Capture error:", error);
-          }
-        });
+        } else {
+          console.log("Waiting for video data...");
+        }
       });
     </script>
   </body>
