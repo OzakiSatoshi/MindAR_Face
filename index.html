@@ -125,11 +125,8 @@
               canvas.height = height;
               const context = canvas.getContext('2d');
 
-              // カメラ映像を描画 (左右反転)
-              context.save();
-              context.scale(-1, 1); // X軸のみ反転
-              context.drawImage(video, -width, 0, width, height);
-              context.restore();
+              // カメラ映像を描画（反転なし）
+              context.drawImage(video, 0, 0, width, height);
 
               // WebGLコンテンツを取得
               const pixels = new Uint8Array(width * height * 4);
@@ -144,14 +141,13 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
               
-              // WebGLの内容を上下反転して描画
+              // WebGLの内容を描画
               tempContext.putImageData(imageData, 0, 0);
               
-              // WebGLコンテンツを適切な向きに描画
-              context.save();
-              context.scale(-1, -1); // X軸とY軸の両方を反転
-              context.drawImage(tempCanvas, -width, -height);
-              context.restore();
+              // WebGLコンテンツを上下反転のみで描画（左右反転なし）
+              context.scale(1, -1); // Y軸のみ反転
+              context.drawImage(tempCanvas, 0, -height);
+              context.setTransform(1, 0, 0, 1, 0, 0); // 変換をリセット
 
               return true;
           } catch (error) {
@@ -159,6 +155,15 @@
               return false;
           }
       }
+
+      // A-Frameのシーン設定を更新（head部分に追加）
+      document.addEventListener('DOMContentLoaded', () => {
+          const sceneEl = document.querySelector('a-scene');
+          if (sceneEl.renderer) {
+              sceneEl.renderer.localClippingEnabled = true;
+              sceneEl.renderer.preserveDrawingBuffer = true;
+          }
+      });
 
       // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
       captureBtn.addEventListener('click', () => {
