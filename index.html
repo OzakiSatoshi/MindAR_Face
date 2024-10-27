@@ -125,7 +125,7 @@
               canvas.height = height;
               const context = canvas.getContext('2d');
 
-              // カメラ映像を描画（反転なし）
+              // カメラ映像を描画
               context.drawImage(video, 0, 0, width, height);
 
               // WebGLコンテンツを取得
@@ -135,35 +135,27 @@
               // WebGLのピクセルデータをImageDataに変換
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
-              // 一時キャンバスを作成してWebGLコンテンツを描画
+              // 一時キャンバスにWebGLコンテンツを描画
               const tempCanvas = document.createElement('canvas');
               tempCanvas.width = width;
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
-              
-              // WebGLの内容を描画
-              tempContext.putImageData(imageData, 0, 0);
-              
-              // WebGLコンテンツを上下反転のみで描画（左右反転なし）
-              context.scale(1, -1); // Y軸のみ反転
-              context.drawImage(tempCanvas, 0, -height);
-              context.setTransform(1, 0, 0, 1, 0, 0); // 変換をリセット
 
-              return true;
+              tempContext.putImageData(imageData, 0, 0);
+              context.drawImage(tempCanvas, 0, 0);
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
-              return false;
           }
       }
 
-      // A-Frameのシーン設定を更新（head部分に追加）
-      document.addEventListener('DOMContentLoaded', () => {
-          const sceneEl = document.querySelector('a-scene');
-          if (sceneEl.renderer) {
-              sceneEl.renderer.localClippingEnabled = true;
-              sceneEl.renderer.preserveDrawingBuffer = true;
-          }
-      });
+      // 全体を左右反転する関数
+      function flipCanvasHorizontally(canvas) {
+          const context = canvas.getContext('2d');
+          context.save();
+          context.scale(-1, 1); // X軸で反転
+          context.drawImage(canvas, -canvas.width, 0);
+          context.restore();
+      }
 
       // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
       captureBtn.addEventListener('click', () => {
@@ -183,6 +175,9 @@
                 const x = (canvas.width - logoWidth) / 2;
                 const y = (canvas.height - logoHeight) / 2;
                 context.drawImage(logoImg, x, y);
+
+                // 全体を左右反転する
+                flipCanvasHorizontally(canvas);
 
                 // キャプチャ画像を生成してダウンロード
                 const imageData = canvas.toDataURL('image/png');
