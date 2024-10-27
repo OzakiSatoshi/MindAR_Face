@@ -127,7 +127,6 @@
 
               // 1. カメラ映像を描画する
               // この時点で、カメラ映像を反転せずそのまま描画します。
-              // この後、全体を左右反転させるため、この段階では反転処理は不要です。
               context.drawImage(video, 0, 0, width, height);
 
               // 2. WebGLコンテンツを取得
@@ -144,17 +143,16 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
-              // WebGLの内容を一時キャンバスにそのまま描画
-              tempContext.putImageData(imageData, 0, 0);
+              // WebGLの内容を一時キャンバスに左右反転させて描画
+              // この処理により、ARオブジェクトだけが反転されます
+              tempContext.save();
+              tempContext.scale(-1, 1); // X軸のみ反転（左右反転）
+              tempContext.drawImage(tempCanvas, -width, 0); // 左右反転したWebGLコンテンツを描画
+              tempContext.restore();
+
+              // カメラ映像にARオブジェクトを合成
               context.drawImage(tempCanvas, 0, 0);
 
-              // 4. 全体を左右反転させる
-              // 最後に、カメラ映像とARオブジェクトを合わせて左右反転させることで、
-              // 実行時の見た目と同じ状態を維持します。
-              context.save();
-              context.scale(-1, 1); // X軸方向に反転
-              context.drawImage(canvas, -width, 0, width, height); // キャンバス全体を反転して描画
-              context.restore();
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
           }
