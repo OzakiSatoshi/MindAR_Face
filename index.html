@@ -139,11 +139,11 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <a-camera active="false" position="0 0 0"></a-camera>
+      <a-camera active="true" position="0 0 0"></a-camera> <!-- カメラをアクティブに -->
 
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model 
-          rotation="0 0 0" 
+          rotation="0 180 0"  <!-- 反転のためにY軸を180度回転 -->
           position="0 0 0" 
           scale="0.01 0.01 0.01" 
           src="#glassesModel"
