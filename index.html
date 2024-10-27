@@ -121,10 +121,8 @@
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
       
-      <!-- カメラの設定 -->
       <a-camera active="false" position="0 0 0"></a-camera>
 
-      <!-- MindARのFaceトラッキングターゲット -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model 
           rotation="0 0 0" 
@@ -221,23 +219,23 @@
 
               // キャンバスをクリア
               ctx.clearRect(0, 0, width, height);
-
-              // カメラ映像を描画
+              
+              // カメラ映像の描画
               ctx.drawImage(video, 0, 0, width, height);
 
               // WebGLコンテンツを取得
               const pixels = new Uint8Array(width * height * 4);
               gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-              // 一時キャンバスを作成しWebGLコンテンツを描画
+              // 一時キャンバスを作成してWebGLコンテンツを描画
               const tempCanvas = document.createElement('canvas');
               tempCanvas.width = width;
               tempCanvas.height = height;
               const tempCtx = tempCanvas.getContext('2d');
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-              tempCtx.putImageData(imageData, 0, 0);
-
+              
               // WebGLコンテンツを上下反転して描画
+              tempCtx.putImageData(imageData, 0, 0);
               ctx.save();
               ctx.translate(0, height);
               ctx.scale(1, -1);
@@ -292,7 +290,6 @@
         }
       });
 
-      // ページが非表示になったときのカメラストップ処理
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           if (video.srcObject) {
