@@ -30,6 +30,7 @@
         z-index: 9999 !important;
         pointer-events: none;
       }
+
       .logo img {
         max-width: 150px;
         width: 30%;
@@ -51,6 +52,7 @@
         .logo img {
           max-width: 100px;
         }
+
         #capture-btn {
           width: 60px;
           height: 60px;
@@ -126,11 +128,9 @@
               const context = canvas.getContext('2d');
 
               // 1. カメラ映像を描画する
-              // この時点で、カメラ映像を反転せずそのまま描画します。
               context.drawImage(video, 0, 0, width, height);
 
               // 2. WebGLコンテンツを取得
-              // ARオブジェクトをWebGLのピクセルデータとして取得し、一時的なキャンバスに描画します。
               const pixels = new Uint8Array(width * height * 4);
               gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
@@ -143,15 +143,14 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
-              // WebGLの内容を一時キャンバスに左右反転させて描画
-              // この処理により、ARオブジェクトだけが反転されます
-              tempContext.save();
-              tempContext.scale(-1, 1); // X軸のみ反転（左右反転）
-              tempContext.drawImage(tempCanvas, -width, 0); // 左右反転したWebGLコンテンツを描画
-              tempContext.restore();
+              // WebGLの内容を一時キャンバスに描画
+              tempContext.putImageData(imageData, 0, 0);
 
-              // カメラ映像にARオブジェクトを合成
-              context.drawImage(tempCanvas, 0, 0);
+              // 4. ARオブジェクトのみ左右反転して合成
+              context.save();
+              context.scale(-1, 1); // X軸のみ反転
+              context.drawImage(tempCanvas, -width, 0); // 左右反転したWebGLコンテンツを描画
+              context.restore();
 
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
