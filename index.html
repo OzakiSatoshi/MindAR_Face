@@ -125,14 +125,17 @@
               canvas.height = height;
               const context = canvas.getContext('2d');
 
-              // カメラ映像を描画（反転なし）
+              // 1. カメラ映像を描画する
+              // この時点で、カメラ映像を反転せずそのまま描画します。
+              // この後、全体を左右反転させるため、この段階では反転処理は不要です。
               context.drawImage(video, 0, 0, width, height);
 
-              // WebGLコンテンツを取得
+              // 2. WebGLコンテンツを取得
+              // ARオブジェクトをWebGLのピクセルデータとして取得し、一時的なキャンバスに描画します。
               const pixels = new Uint8Array(width * height * 4);
               gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-              // WebGLのピクセルデータをImageDataに変換
+              // 3. WebGLのピクセルデータをImageDataに変換
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
               // 一時キャンバスにWebGLコンテンツを描画
@@ -141,8 +144,17 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
+              // WebGLの内容を一時キャンバスにそのまま描画
               tempContext.putImageData(imageData, 0, 0);
               context.drawImage(tempCanvas, 0, 0);
+
+              // 4. 全体を左右反転させる
+              // 最後に、カメラ映像とARオブジェクトを合わせて左右反転させることで、
+              // 実行時の見た目と同じ状態を維持します。
+              context.save();
+              context.scale(-1, 1); // X軸方向に反転
+              context.drawImage(canvas, -width, 0, width, height); // キャンバス全体を反転して描画
+              context.restore();
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
           }
