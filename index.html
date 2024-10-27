@@ -208,6 +208,9 @@
           // シーンのサイズを更新
           scene.style.width = '100%';
           scene.style.height = '100%';
+
+          // MindARの準備が整ったら、カメラ映像を表示
+          sceneEl.emit('arReady');
         } catch (error) {
           console.error('Camera access error:', error);
           alert('カメラのアクセスに失敗しました。');
@@ -215,7 +218,7 @@
       }
 
       // シーンの読み込み完了後にカメラを初期化
-      scene.addEventListener('loaded', () => {
+      window.addEventListener('DOMContentLoaded', () => {
         initCamera();
         // ARの初期化を確実にする
         setTimeout(() => {
