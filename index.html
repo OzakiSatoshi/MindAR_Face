@@ -12,6 +12,15 @@
 
       .a-canvas {
         z-index: 0 !important;
+        position: fixed !important;
+      }
+
+      #video-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
       }
 
       .logo {
@@ -106,12 +115,17 @@
 
       #arCanvas {
         display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
       }
     </style>
   </head>
 
   <body>
-    <video id="video" autoplay playsinline style="display:none;"></video>
+    <div id="video-container">
+      <video id="video" autoplay playsinline style="display:none;"></video>
+    </div>
 
     <a-scene 
       mindar-face 
@@ -121,6 +135,10 @@
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
       
+      <a-assets>
+        <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
+      </a-assets>
+
       <a-camera active="false" position="0 0 0"></a-camera>
 
       <a-entity mindar-face-target="anchorIndex: 168">
@@ -128,7 +146,8 @@
           rotation="0 0 0" 
           position="0 0 0" 
           scale="0.01 0.01 0.01" 
-          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf">
+          src="#glassesModel"
+          class="ar-object">
         </a-gltf-model>
       </a-entity>
     </a-scene>
@@ -156,18 +175,30 @@
       const logoImg = document.getElementById('logo-img');
       const loadingOverlay = document.getElementById('loading-overlay');
       let isTracking = false;
+      let isInitialized = false;
 
       // MindARの初期化とエラーハンドリング
       const sceneEl = document.querySelector('a-scene');
       sceneEl.addEventListener('arReady', () => {
         console.log('MindAR is ready');
         isTracking = true;
+        if (!isInitialized) {
+          initializeAR();
+          isInitialized = true;
+        }
       });
 
       sceneEl.addEventListener('arError', (error) => {
         console.error('MindAR error:', error);
         isTracking = false;
       });
+
+      function initializeAR() {
+        const arObject = document.querySelector('.ar-object');
+        if (arObject) {
+          arObject.setAttribute('visible', 'true');
+        }
+      }
 
       // カメラの初期化
       async function initCamera() {
@@ -184,84 +215,97 @@
           video.srcObject = stream;
           await video.play();
 
-          // キャンバスのサイズを調整
+          // キャンバスのサイズを設定
           const track = stream.getVideoTracks()[0];
           const settings = track.getSettings();
-          canvas.width = settings.width;
-          canvas.height = settings.height;
+          canvas.width = settings.width || 1280;
+          canvas.height = settings.height || 720;
+
+          // シーンのサイズも更新
+          scene.style.width = `${canvas.width}px`;
+          scene.style.height = `${canvas.height}px`;
         } catch (error) {
           console.error('Camera access error:', error);
           alert('カメラのアクセスに失敗しました。');
         }
       }
 
-      scene.addEventListener('loaded', initCamera);
+      // シーンの読み込み完了後にカメラを初期化
+      scene.addEventListener('loaded', () => {
+        initCamera();
+        // ARの初期化を確実にする
+        setTimeout(() => {
+          if (!isInitialized) {
+            initializeAR();
+            isInitialized = true;
+          }
+        }, 1000);
+      });
 
-      // シーンをキャプチャして画像を生成
+      // シーンのキャプチャ処理
       async function captureScene() {
         return new Promise((resolve) => {
-          if (!isTracking) {
-            console.warn('Face tracking is not active');
-          }
-
-          requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
             try {
               const renderer = scene.renderer;
               const gl = renderer.getContext();
               
-              const width = gl.drawingBufferWidth;
-              const height = gl.drawingBufferHeight;
+              // 実際の表示サイズを取得
+              const displayWidth = window.innerWidth;
+              const displayHeight = window.innerHeight;
               
-              // キャンバスのサイズ設定
-              canvas.width = width;
-              canvas.height = height;
+              // キャンバスのサイズを設定
+              canvas.width = displayWidth;
+              canvas.height = displayHeight;
               const ctx = canvas.getContext('2d');
 
               // キャンバスをクリア
-              ctx.clearRect(0, 0, width, height);
+              ctx.clearRect(0, 0, displayWidth, displayHeight);
               
-              // カメラ映像の描画
-              ctx.drawImage(video, 0, 0, width, height);
+              // カメラ映像を描画
+              ctx.drawImage(video, 0, 0, displayWidth, displayHeight);
 
               // WebGLコンテンツを取得
-              const pixels = new Uint8Array(width * height * 4);
-              gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+              const pixels = new Uint8Array(displayWidth * displayHeight * 4);
+              gl.readPixels(0, 0, displayWidth, displayHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-              // 一時キャンバスを作成してWebGLコンテンツを描画
+              // WebGLコンテンツを処理
+              const imageData = new ImageData(new Uint8ClampedArray(pixels), displayWidth, displayHeight);
               const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = width;
-              tempCanvas.height = height;
+              tempCanvas.width = displayWidth;
+              tempCanvas.height = displayHeight;
               const tempCtx = tempCanvas.getContext('2d');
-              const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
               
-              // WebGLコンテンツを上下反転して描画
+              // WebGLコンテンツを正しい向きで描画
               tempCtx.putImageData(imageData, 0, 0);
               ctx.save();
-              ctx.translate(0, height);
+              ctx.translate(0, displayHeight);
               ctx.scale(1, -1);
               ctx.drawImage(tempCanvas, 0, 0);
               ctx.restore();
 
               // ロゴを描画
-              const logoWidth = Math.min(150, width * 0.3);
+              const logoWidth = Math.min(150, displayWidth * 0.3);
               const logoHeight = (logoWidth * logoImg.height) / logoImg.width;
-              const logoX = (width - logoWidth) / 2;
-              const logoY = height - logoHeight - 20;
+              const logoX = (displayWidth - logoWidth) / 2;
+              const logoY = displayHeight - logoHeight - 20;
+              
               ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
 
+              // 画像データを生成
               resolve(canvas.toDataURL('image/png', 1.0));
             } catch (error) {
-              console.error('キャプチャエラー:', error);
+              console.error('Capture error:', error);
               resolve(null);
             }
           });
         });
       }
 
-      // 撮影ボタンがクリックされたときの処理
+      // 撮影ボタンのクリックハンドラ
       captureBtn.addEventListener('click', async () => {
-        if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-          console.log('カメラの準備ができていません...');
+        if (!isTracking || video.readyState !== video.HAVE_ENOUGH_DATA) {
+          alert('カメラとARの準備ができるまでお待ちください。');
           return;
         }
 
@@ -269,7 +313,8 @@
         captureBtn.style.display = 'none';
 
         try {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // ARの描画を待つ
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           const imageData = await captureScene();
           
@@ -282,7 +327,7 @@
             alert('キャプチャに失敗しました。もう一度お試しください。');
           }
         } catch (error) {
-          console.error('キャプチャ処理中にエラーが発生しました:', error);
+          console.error('Capture process error:', error);
           alert('キャプチャ中にエラーが発生しました。もう一度お試しください。');
         } finally {
           loadingOverlay.style.display = 'none';
@@ -290,6 +335,7 @@
         }
       });
 
+      // 画面の表示状態が変更された時の処理
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           if (video.srcObject) {
