@@ -143,15 +143,13 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
-              // WebGLの内容をそのまま描画（ここで上下反転を修正）
+              // 4. WebGLの内容を上下反転と左右反転を修正して描画
               tempContext.putImageData(imageData, 0, 0);
               context.save();
-              context.scale(1, -1);  // Y軸のみ反転して、上下反転を防ぐ
-              context.drawImage(tempCanvas, 0, -height);  // Y軸反転後、適切に描画
+              context.scale(-1, -1);  // X軸とY軸の両方を反転して、上下左右反転を修正
+              context.drawImage(tempCanvas, -width, -height);  // 正しい位置に描画
               context.restore();
               
-              // 上下反転は修正され、正しい方向で描画されるはず
-
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
           }
