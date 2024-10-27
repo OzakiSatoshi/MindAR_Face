@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="ja">
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
@@ -120,35 +120,25 @@
         left: 0;
       }
     </style>
-  </head>
+</head>
 
-  <body>
+<body>
     <div id="video-container">
       <video id="video" autoplay playsinline style="display:none;"></video>
     </div>
 
-    <a-scene 
-      mindar-face 
-      embedded 
-      color-space="sRGB" 
-      renderer="colorManagement: true; alpha: true; antialias: true; preserveDrawingBuffer: true;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true; alpha: true; antialias: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <a-camera active="true" position="0 0 0"></a-camera> <!-- カメラをアクティブに -->
+      <!-- ARカメラの設定 -->
+      <a-camera active="true" position="0 0 0"></a-camera>
 
+      <!-- ARオブジェクト -->
       <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model 
-          rotation="0 180 0"  <!-- 反転のためにY軸を180度回転 -->
-          position="0 0 0" 
-          scale="0.01 0.01 0.01" 
-          src="#glassesModel"
-          class="ar-object">
-        </a-gltf-model>
+        <a-gltf-model rotation="0 180 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel" class="ar-object"></a-gltf-model>
       </a-entity>
     </a-scene>
 
@@ -177,22 +167,23 @@
       let isTracking = false;
       let isInitialized = false;
 
-      // MindARの初期化とエラーハンドリング
-      const sceneEl = document.querySelector('a-scene');
-      sceneEl.addEventListener('arReady', () => {
+      // MindAR初期化後にARオブジェクトを表示する
+      scene.addEventListener('arReady', () => {
         console.log('MindAR is ready');
         isTracking = true;
         if (!isInitialized) {
-          initializeAR();
+          initializeAR();  // MindARの初期化完了後にARオブジェクトを表示
           isInitialized = true;
         }
       });
 
-      sceneEl.addEventListener('arError', (error) => {
+      // エラーハンドリング
+      scene.addEventListener('arError', (error) => {
         console.error('MindAR error:', error);
         isTracking = false;
       });
 
+      // ARオブジェクトの初期化と表示
       function initializeAR() {
         const arObject = document.querySelector('.ar-object');
         if (arObject) {
@@ -233,10 +224,9 @@
       // シーンの読み込み完了後にカメラを初期化
       scene.addEventListener('loaded', () => {
         initCamera();
-        // ARの初期化を確実にする
         setTimeout(() => {
           if (!isInitialized) {
-            initializeAR();
+            initializeAR();  // 初期化確認後に再度実行
             isInitialized = true;
           }
         }, 1000);
@@ -346,5 +336,5 @@
         }
       });
     </script>
-  </body>
+</body>
 </html>
