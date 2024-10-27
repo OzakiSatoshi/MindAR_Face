@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1, user-scalable=no" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
@@ -82,13 +82,10 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- カメラのFOVを動的に設定し、画面の向きやアスペクト比に対応 -->
-      <a-camera id="mainCamera" fov="60" position="0 0 0"></a-camera>
+      <a-camera position="0 0 0"></a-camera>
 
-      <!-- ARエンティティの階層構造を整理し、位置とスケールを管理 -->
-      <a-entity mindar-face-target="anchorIndex: 168" position="0 0 0">
-        <!-- X軸に微調整を加え、スマホでのズレを修正 -->
-        <a-gltf-model id="arObject" rotation="0 0 0" position="0.01 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
+      <a-entity mindar-face-target="anchorIndex: 168">
+        <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
@@ -108,8 +105,6 @@
       const video = document.getElementById('video');
       const scene = document.querySelector('a-scene');
       const logoImg = document.getElementById('logo-img');
-      const camera = document.getElementById('mainCamera');
-      const arObject = document.getElementById('arObject');
 
       // カメラ映像の取得
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -125,40 +120,14 @@
         const width = window.innerWidth;
         const height = window.innerHeight;
 
-        // アスペクト比に基づいてFOVを動的に調整
-        const aspectRatio = width / height;
-        if (aspectRatio < 1) { // 縦長の場合
-          camera.setAttribute('fov', 75); // 必要に応じて微調整
-        } else { // 横長の場合
-          camera.setAttribute('fov', 60);
-        }
-
         scene.style.width = `${width}px`;
         scene.style.height = `${height}px`;
       }
-
-      // デバイスの向きに基づくカメラの更新
-      window.addEventListener('deviceorientation', (event) => {
-        const alpha = event.alpha;
-        const beta = event.beta;
-        const gamma = event.gamma;
-        
-        // 向きに応じてカメラの調整を行う
-        camera.setAttribute('rotation', `${beta} ${alpha} ${gamma}`);
-      });
 
       // 初期ロード時とリサイズ時にリサイズ関数を実行
       window.addEventListener('resize', resizeScene);
       window.addEventListener('orientationchange', resizeScene);
       resizeScene();
-
-      // トラッキングの安定性向上
-      const sceneEl = document.getElementById('arScene');
-      sceneEl.addEventListener('arReady', () => {
-        const mindarSystem = sceneEl.systems["mindar-face-system"];
-        mindarSystem.filterMinCF = 0.001;  // Pixelデバイス向けに微調整
-        mindarSystem.filterBeta = 60;      // 安定性向上のためのパラメータ変更
-      });
 
       // WebGLとカメラ映像を合成して描画するための関数
       function captureWebGLAndVideo(renderer, canvas) {
