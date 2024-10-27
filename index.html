@@ -76,7 +76,8 @@
     <a-scene mindar-face embedded color-space="sRGB"
              renderer="colorManagement: true, alpha: true"
              vr-mode-ui="enabled: false"
-             device-orientation-permission-ui="enabled: false">
+             device-orientation-permission-ui="enabled: false"
+             id="arScene">
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
@@ -107,6 +108,7 @@
       const scene = document.querySelector('a-scene');
       const logoImg = document.getElementById('logo-img');
       const camera = document.getElementById('mainCamera');
+      const arObject = document.getElementById('arObject');
 
       // カメラ映像の取得
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -140,7 +142,7 @@
       resizeScene();
 
       // トラッキングの安定性向上
-      const sceneEl = document.querySelector('a-scene');
+      const sceneEl = document.getElementById('arScene');
       sceneEl.addEventListener('arReady', () => {
         const mindarSystem = sceneEl.systems["mindar-face-system"];
         mindarSystem.filterMinCF = 0.0001; // トラッキングの最小信頼値
