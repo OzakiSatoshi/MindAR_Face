@@ -143,14 +143,16 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
-              // WebGLの内容を一時キャンバスに描画
+              // WebGLの内容をそのまま描画
               tempContext.putImageData(imageData, 0, 0);
 
-              // 4. ARオブジェクトのみ左右反転して合成
+              // 4. ARオブジェクトのみ左右反転して合成（上下はそのまま）
               context.save();
-              context.scale(-1, 1); // X軸のみ反転
+              context.scale(-1, 1); // X軸のみ反転（左右反転）
               context.drawImage(tempCanvas, -width, 0); // 左右反転したWebGLコンテンツを描画
               context.restore();
+              
+              // 上下反転は不要なため、反転処理は行わない
 
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
