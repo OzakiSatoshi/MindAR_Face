@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,7 +57,7 @@
     <video id="video" autoplay playsinline style="display:none;"></video>
 
     <a-scene mindar-face embedded color-space="sRGB" 
-             renderer="colorManagement: true, alpha: true" 
+             renderer="colorManagement: true, alpha: true, preserveDrawingBuffer: true" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
       <a-assets>
@@ -70,7 +71,8 @@
       </a-entity>
     </a-scene>
 
-      <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo" style="width :100%; height:100%;">
+    <div class="logo">
+      <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
     </div>
 
     <button id="capture-btn">
@@ -103,7 +105,7 @@
 
         // 撮影ボタンのイベントリスナー
         captureBtn.addEventListener('click', async () => {
-          if (!video.readyState === video.HAVE_ENOUGH_DATA) {
+          if (video.readyState !== video.HAVE_ENOUGH_DATA) {
             console.log("Waiting for video data...");
             return;
           }
@@ -119,7 +121,7 @@
             const camera = scene.camera;
 
             // シーンをレンダリング
-            renderer.preserveDrawingBuffer = true; // 重要: WebGLバッファを保持
+            renderer.preserveDrawingBuffer = true; // WebGLバッファを保持
             renderer.render(scene.object3D, camera);
 
             // カメラ映像とARを合成
