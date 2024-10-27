@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
@@ -82,7 +82,7 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <a-camera active="false" position="0 0 0"></a-camera>
+      <a-camera fov="60" position="0 0 0"></a-camera> <!-- FOVの設定でデバイス間の違いを調整 -->
 
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
@@ -114,6 +114,19 @@
         .catch((error) => {
           console.error('Error accessing the camera', error);
         });
+
+      // ウィンドウサイズ変更時やデバイス向き変更時の対応
+      function resizeScene() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        scene.style.width = `${width}px`;
+        scene.style.height = `${height}px`;
+      }
+
+      // 初期ロード時とリサイズ時にリサイズ関数を実行
+      window.addEventListener('resize', resizeScene);
+      window.addEventListener('orientationchange', resizeScene);
+      resizeScene();
 
       // WebGLとカメラ映像を合成して描画するための関数
       function captureWebGLAndVideo(renderer, canvas) {
