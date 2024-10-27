@@ -82,13 +82,12 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- カメラのFOVを動的に設定し、画面の向きやアスペクト比に対応 -->
-      <a-camera id="mainCamera" fov="60" position="0 0 0"></a-camera>
+      <!-- カメラの設定は動的に調整し、トラッキングデータを反映 -->
+      <a-camera id="mainCamera" active="true" look-controls="enabled: true" position="0 0 0"></a-camera>
 
-      <!-- ARエンティティの階層構造を整理し、位置とスケールを管理 -->
-      <a-entity mindar-face-target="anchorIndex: 168" position="0 0 0">
-        <!-- X軸に微調整を加え、スマホでのズレを修正 -->
-        <a-gltf-model id="arObject" rotation="0 0 0" position="0.01 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
+      <!-- ARエンティティが顔の位置に追従する -->
+      <a-entity mindar-face-target="anchorIndex: 168">
+        <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
