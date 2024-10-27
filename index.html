@@ -126,7 +126,10 @@
           const context = canvas.getContext('2d');
 
           // カメラ映像を描画
-          context.drawImage(video, 0, 0, width, height);
+          context.save();
+          context.scale(-1, 1); // X軸を反転
+          context.drawImage(video, -width, 0, width, height); // 左右反転したカメラ映像を描画
+          context.restore();
 
           // WebGLコンテンツを取得（Y軸を反転）
           const pixels = new Uint8Array(width * height * 4);
@@ -135,17 +138,16 @@
           // WebGLのピクセルデータをImageDataに変換
           const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
-          // 一時キャンバスにWebGLコンテンツを描画（反転）
+          // 一時キャンバスにWebGLコンテンツを描画（X軸とY軸を反転）
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = width;
           tempCanvas.height = height;
           const tempContext = tempCanvas.getContext('2d');
 
-          // Y軸を反転してWebGLコンテンツを合成
           tempContext.putImageData(imageData, 0, 0);
           context.save();
-          context.scale(1, -1); // Y軸を反転
-          context.drawImage(tempCanvas, 0, -height); // 反転したWebGLを描画
+          context.scale(-1, 1); // X軸を反転
+          context.drawImage(tempCanvas, -width, 0); // 反転したWebGLを描画
           context.restore();
           
         } catch (error) {
