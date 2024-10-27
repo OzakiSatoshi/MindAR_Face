@@ -1,8 +1,11 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
+    <!-- html2canvas ライブラリの読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
       .a-canvas {
         z-index: 0 !important;
@@ -78,97 +81,21 @@
       <img src="./shutter.png" alt="Shutter Button" style="width:100%; height:100%;">
     </button>
 
-    <canvas id="arCanvas" style="display:none;"></canvas>
-
     <script>
       const captureBtn = document.getElementById('capture-btn');
-      const canvas = document.getElementById('arCanvas');
-      const video = document.getElementById('video');
-      const scene = document.querySelector('a-scene');
-      const logoImg = document.getElementById('logo-img');
 
-      // カメラ映像の取得
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then((stream) => {
-          video.srcObject = stream;
-        })
-        .catch((error) => {
-          console.error('Error accessing the camera', error);
-        });
-
-      // WebGLとカメラ映像を合成して描画するための関数
-      function captureWebGLAndVideo(renderer, canvas) {
-        try {
-          const gl = renderer.getContext();
-          const width = gl.drawingBufferWidth;
-          const height = gl.drawingBufferHeight;
-
-          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = width;
-          tempCanvas.height = height;
-          const tempContext = tempCanvas.getContext('2d');
-
-          // カメラ映像を描画
-          tempContext.drawImage(video, 0, 0, width, height);
-
-          // WebGLの内容を描画（Y軸を反転）
-          const pixels = new Uint8Array(width * height * 4);
-          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-
-          // Y軸を反転してWebGLコンテンツを合成
-          tempContext.save();
-          tempContext.scale(1, -1);
-          tempContext.putImageData(imageData, 0, -height);
-          tempContext.restore();
-
-          // 最終的にメインキャンバスに合成
-          const context = canvas.getContext('2d');
-          canvas.width = width;
-          canvas.height = height;
-          context.drawImage(tempCanvas, 0, 0);
-
-        } catch (error) {
-          console.error("Error during WebGL and video capture", error);
-        }
-      }
-
-      // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
+      // 撮影ボタンを押した際にページ全体のスクリーンショットをキャプチャする機能
       captureBtn.addEventListener('click', () => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          const renderer = scene.renderer;
-
-          if (renderer && scene.camera) {
-            requestAnimationFrame(() => {
-              try {
-                // WebGLとカメラ映像を合成して描画
-                captureWebGLAndVideo(renderer, canvas);
-
-                // ロゴをキャンバスに描画（中央に配置）
-                const context = canvas.getContext('2d');
-                const logoWidth = logoImg.width;
-                const logoHeight = logoImg.height;
-                const x = (canvas.width - logoWidth) / 2;
-                const y = (canvas.height - logoHeight) / 2;
-                context.drawImage(logoImg, x, y);
-
-                // キャプチャ画像を生成してダウンロード
-                const imageData = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = imageData;
-                link.download = 'capture.png';
-                link.click();
-              } catch (error) {
-                console.error("Render error:", error);
-              }
-            });
-          } else {
-            console.error("Renderer or camera is not available for rendering.");
-          }
-        } else {
-          console.log("Waiting for video data...");
-        }
+        html2canvas(document.body).then(canvas => {
+          // 生成されたスクリーンショットをダウンロード
+          const imageData = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = imageData;
+          link.download = 'screenshot.png';
+          link.click();
+        }).catch(error => {
+          console.error("Error capturing the screenshot:", error);
+        });
       });
     </script>
   </body>
