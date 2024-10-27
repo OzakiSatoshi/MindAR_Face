@@ -128,7 +128,7 @@
               // カメラ映像を描画 (左右反転)
               context.save();
               context.scale(-1, 1); // X軸のみ反転
-              context.drawImage(video, -width, 0, width, height); // 左右反転したカメラ映像を描画
+              context.drawImage(video, -width, 0, width, height);
               context.restore();
 
               // WebGLコンテンツを取得
@@ -138,20 +138,25 @@
               // WebGLのピクセルデータをImageDataに変換
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
-              // 一時キャンバスにWebGLコンテンツを描画
+              // 一時キャンバスを作成してWebGLコンテンツを描画
               const tempCanvas = document.createElement('canvas');
               tempCanvas.width = width;
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
-
-              // WebGLの内容を描画 (左右反転)
+              
+              // WebGLの内容を上下反転して描画
               tempContext.putImageData(imageData, 0, 0);
+              
+              // WebGLコンテンツを適切な向きに描画
               context.save();
-              context.scale(-1, 1); // X軸のみ反転（左右反転）
-              context.drawImage(tempCanvas, -width, 0); // 左右反転したWebGLコンテンツを描画
+              context.scale(-1, -1); // X軸とY軸の両方を反転
+              context.drawImage(tempCanvas, -width, -height);
               context.restore();
+
+              return true;
           } catch (error) {
               console.error("Error during WebGL and video capture", error);
+              return false;
           }
       }
 
