@@ -70,8 +70,7 @@
       </a-entity>
     </a-scene>
 
-    <div class="logo">
-      <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo">
+      <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo" style="width :100%; height:100%;">
     </div>
 
     <button id="capture-btn">
@@ -96,14 +95,41 @@
           console.error('Error accessing the camera', error);
         });
 
-      // WebGLとカメラ映像を合成して描画するための関数
-      function captureWebGLAndVideo(renderer, canvas) {
+      // WebGLの描画バッファを取得し、そのデータをImageDataに変換して描画する関数
+      function captureWebGLToImageData(renderer) {
         try {
           const gl = renderer.getContext();
           const width = gl.drawingBufferWidth;
           const height = gl.drawingBufferHeight;
 
-          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
+          // WebGLの描画バッファからピクセルデータを取得
+          const pixels = new Uint8Array(width * height * 4);
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+          // WebGLのピクセルデータをImageDataに変換
+          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+
+          return imageData;  // ImageDataオブジェクトを返す
+        } catch (error) {
+          console.error("Error during WebGL buffer capture", error);
+          return null;
+        }
+      }
+
+      // WebGLコンテンツとカメラ映像を合成してキャンバスに描画する関数
+      function renderCombinedScene(renderer, canvas, video) {
+        try {
+          // WebGLの描画バッファをImageDataに変換
+          const imageData = captureWebGLToImageData(renderer);
+
+          if (!imageData) {
+            throw new Error("Failed to capture WebGL content.");
+          }
+
+          const width = imageData.width;
+          const height = imageData.height;
+
+          // 一時キャンバスを作成してWebGLとカメラ映像を合成
           const tempCanvas = document.createElement('canvas');
           tempCanvas.width = width;
           tempCanvas.height = height;
@@ -112,14 +138,9 @@
           // カメラ映像を描画
           tempContext.drawImage(video, 0, 0, width, height);
 
-          // WebGLの内容を描画（Y軸を反転）
-          const pixels = new Uint8Array(width * height * 4);
-          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-
-          // Y軸を反転してWebGLコンテンツを合成
+          // WebGLの内容を反転して描画
           tempContext.save();
-          tempContext.scale(1, -1);
+          tempContext.scale(1, -1);  // Y軸を反転
           tempContext.putImageData(imageData, 0, -height);
           tempContext.restore();
 
@@ -130,7 +151,7 @@
           context.drawImage(tempCanvas, 0, 0);
 
         } catch (error) {
-          console.error("Error during WebGL and video capture", error);
+          console.error("Error during scene capture", error);
         }
       }
 
@@ -142,8 +163,11 @@
           if (renderer && scene.camera) {
             requestAnimationFrame(() => {
               try {
+                // ARオブジェクトをレンダリング
+                renderer.render(scene.object3D, scene.camera);  
+
                 // WebGLとカメラ映像を合成して描画
-                captureWebGLAndVideo(renderer, canvas);
+                renderCombinedScene(renderer, canvas, video);
 
                 // ロゴをキャンバスに描画（中央に配置）
                 const context = canvas.getContext('2d');
@@ -170,6 +194,7 @@
           console.log("Waiting for video data...");
         }
       });
+          
     </script>
   </body>
 </html>
