@@ -71,7 +71,6 @@
   </head>
 
   <body>
-    <!-- カメラ映像を表示するためのvideo要素 -->
     <video id="video" autoplay playsinline style="display:none;"></video>
 
     <a-scene mindar-face embedded color-space="sRGB"
@@ -82,10 +81,12 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <a-camera fov="60" position="0 0 0"></a-camera> <!-- FOVの設定でデバイス間の違いを調整 -->
+      <!-- カメラのFOVを動的に設定し、画面の向きやアスペクト比に対応 -->
+      <a-camera id="mainCamera" fov="60" position="0 0 0"></a-camera>
 
-      <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
+      <!-- ARエンティティの階層構造を整理し、位置とスケールを管理 -->
+      <a-entity mindar-face-target="anchorIndex: 168" position="0 0 0">
+        <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
@@ -105,6 +106,7 @@
       const video = document.getElementById('video');
       const scene = document.querySelector('a-scene');
       const logoImg = document.getElementById('logo-img');
+      const camera = document.getElementById('mainCamera');
 
       // カメラ映像の取得
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -119,6 +121,15 @@
       function resizeScene() {
         const width = window.innerWidth;
         const height = window.innerHeight;
+
+        // アスペクト比に基づいてFOVを動的に調整
+        const aspectRatio = width / height;
+        if (aspectRatio < 1) { // 縦長の場合
+          camera.setAttribute('fov', 70);
+        } else { // 横長の場合
+          camera.setAttribute('fov', 60);
+        }
+
         scene.style.width = `${width}px`;
         scene.style.height = `${height}px`;
       }
@@ -127,6 +138,14 @@
       window.addEventListener('resize', resizeScene);
       window.addEventListener('orientationchange', resizeScene);
       resizeScene();
+
+      // トラッキングの安定性向上
+      const sceneEl = document.querySelector('a-scene');
+      sceneEl.addEventListener('arReady', () => {
+        const mindarSystem = sceneEl.systems["mindar-face-system"];
+        mindarSystem.filterMinCF = 0.0001; // トラッキングの最小信頼値
+        mindarSystem.filterBeta = 50; // トラッキングの平滑化パラメータ
+      });
 
       // WebGLとカメラ映像を合成して描画するための関数
       function captureWebGLAndVideo(renderer, canvas) {
@@ -140,14 +159,14 @@
               canvas.height = height;
               const context = canvas.getContext('2d');
 
-              // 1. カメラ映像を描画する
+              // カメラ映像を描画する
               context.drawImage(video, 0, 0, width, height);
 
-              // 2. WebGLコンテンツを取得
+              // WebGLコンテンツを取得
               const pixels = new Uint8Array(width * height * 4);
               gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-              // 3. WebGLのピクセルデータをImageDataに変換
+              // WebGLのピクセルデータをImageDataに変換
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
 
               // 一時キャンバスにWebGLコンテンツを描画
@@ -156,7 +175,7 @@
               tempCanvas.height = height;
               const tempContext = tempCanvas.getContext('2d');
 
-              // 4. WebGLの内容を上下反転と左右反転を修正して描画
+              // WebGLの内容を上下反転と左右反転を修正して描画
               tempContext.putImageData(imageData, 0, 0);
               context.save();
               context.scale(-1, -1);  // X軸とY軸の両方を反転して、上下左右反転を修正
