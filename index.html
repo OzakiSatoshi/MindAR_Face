@@ -87,7 +87,8 @@
 
       <!-- ARエンティティの階層構造を整理し、位置とスケールを管理 -->
       <a-entity mindar-face-target="anchorIndex: 168" position="0 0 0">
-        <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
+        <!-- X軸に微調整を加え、スマホでのズレを修正 -->
+        <a-gltf-model id="arObject" rotation="0 0 0" position="0.01 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
