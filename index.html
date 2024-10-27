@@ -1,22 +1,12 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
+<html>
+  <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-
       .a-canvas {
         z-index: 0 !important;
-        position: fixed !important;
-      }
-
-      #video-container {
-        position: fixed;
+        position: absolute !important;
         top: 0;
         left: 0;
         width: 100%;
@@ -24,121 +14,59 @@
       }
 
       .logo {
-        position: fixed;
-        bottom: 20px;
+        position: absolute;
+        bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 9999;
+        z-index: 9999 !important;
         pointer-events: none;
       }
-
       .logo img {
         max-width: 150px;
         width: 30%;
         height: auto;
-        filter: drop-shadow(0 0 4px rgba(0,0,0,0.3));
       }
 
       #capture-btn {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        z-index: 10000;
-        padding: 0;
-        background-color: rgba(255, 255, 255, 0.8);
-        border: 3px solid #fff;
-        border-radius: 50%;
-        width: 70px;
-        height: 70px;
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 10000 !important;
+        padding: 10px;
+        background-color: transparent;
+        border: none;
         cursor: pointer;
-        transition: transform 0.2s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      }
-
-      #capture-btn:hover {
-        transform: scale(1.05);
-      }
-
-      #capture-btn:active {
-        transform: scale(0.95);
-      }
-
-      #capture-btn img {
-        width: 100%;
-        height: 100%;
-        padding: 15px;
-        box-sizing: border-box;
-      }
-
-      #loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 10001;
-        color: white;
-        font-family: Arial, sans-serif;
-      }
-
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-right: 10px;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
       }
 
       @media (max-width: 768px) {
         .logo img {
           max-width: 100px;
         }
-
         #capture-btn {
           width: 60px;
           height: 60px;
-          bottom: 30px;
-          left: 15px;
+          bottom: 20px;
         }
       }
-
-      #arCanvas {
-        display: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
     </style>
-</head>
+  </head>
 
-<body>
-    <div id="video-container">
-      <video id="video" autoplay playsinline style="display:none;"></video>
-    </div>
+  <body>
+    <!-- カメラ映像を表示するためのvideo要素 -->
+    <video id="video" autoplay playsinline style="display:none;"></video>
 
-    <a-scene mindar-face embedded color-space="sRGB" renderer="colorManagement: true; alpha: true; antialias: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-      
+    <a-scene mindar-face embedded color-space="sRGB" 
+             renderer="colorManagement: true, alpha: true" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- ARカメラの設定 -->
-      <a-camera active="true" position="0 0 0"></a-camera>
+      <a-camera active="false" position="0 0 0"></a-camera>
 
-      <!-- ARオブジェクト -->
       <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model rotation="0 180 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel" class="ar-object"></a-gltf-model>
+        <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
@@ -147,15 +75,10 @@
     </div>
 
     <button id="capture-btn">
-      <img src="./shutter.png" alt="Shutter Button">
+      <img src="./shutter.png" alt="Shutter Button" style="width:100%; height:100%;">
     </button>
 
-    <canvas id="arCanvas"></canvas>
-
-    <div id="loading-overlay">
-      <div class="spinner"></div>
-      <span>Processing...</span>
-    </div>
+    <canvas id="arCanvas" style="display:none;"></canvas>
 
     <script>
       const captureBtn = document.getElementById('capture-btn');
@@ -163,178 +86,90 @@
       const video = document.getElementById('video');
       const scene = document.querySelector('a-scene');
       const logoImg = document.getElementById('logo-img');
-      const loadingOverlay = document.getElementById('loading-overlay');
-      let isTracking = false;
-      let isInitialized = false;
 
-      // MindAR初期化後にARオブジェクトを表示する
-      scene.addEventListener('arReady', () => {
-        console.log('MindAR is ready');
-        isTracking = true;
-        if (!isInitialized) {
-          initializeAR();  // MindARの初期化完了後にARオブジェクトを表示
-          isInitialized = true;
-        }
-      });
-
-      // エラーハンドリング
-      scene.addEventListener('arError', (error) => {
-        console.error('MindAR error:', error);
-        isTracking = false;
-      });
-
-      // ARオブジェクトの初期化と表示
-      function initializeAR() {
-        const arObject = document.querySelector('.ar-object');
-        if (arObject) {
-          arObject.setAttribute('visible', 'true');
-        }
-      }
-
-      // カメラの初期化
-      async function initCamera() {
-        try {
-          const constraints = {
-            video: {
-              facingMode: 'user',
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            }
-          };
-
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // カメラ映像の取得
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
           video.srcObject = stream;
-          await video.play();
-
-          // キャンバスのサイズを設定
-          const track = stream.getVideoTracks()[0];
-          const settings = track.getSettings();
-          canvas.width = settings.width || 1280;
-          canvas.height = settings.height || 720;
-
-          // シーンのサイズも更新
-          scene.style.width = `${canvas.width}px`;
-          scene.style.height = `${canvas.height}px`;
-        } catch (error) {
-          console.error('Camera access error:', error);
-          alert('カメラのアクセスに失敗しました。');
-        }
-      }
-
-      // シーンの読み込み完了後にカメラを初期化
-      scene.addEventListener('loaded', () => {
-        initCamera();
-        setTimeout(() => {
-          if (!isInitialized) {
-            initializeAR();  // 初期化確認後に再度実行
-            isInitialized = true;
-          }
-        }, 1000);
-      });
-
-      // シーンのキャプチャ処理
-      async function captureScene() {
-        return new Promise((resolve) => {
-          requestAnimationFrame(async () => {
-            try {
-              const renderer = scene.renderer;
-              const gl = renderer.getContext();
-              
-              // 実際の表示サイズを取得
-              const displayWidth = window.innerWidth;
-              const displayHeight = window.innerHeight;
-              
-              // キャンバスのサイズを設定
-              canvas.width = displayWidth;
-              canvas.height = displayHeight;
-              const ctx = canvas.getContext('2d');
-
-              // キャンバスをクリア
-              ctx.clearRect(0, 0, displayWidth, displayHeight);
-              
-              // カメラ映像を描画
-              ctx.drawImage(video, 0, 0, displayWidth, displayHeight);
-
-              // WebGLコンテンツを取得
-              const pixels = new Uint8Array(displayWidth * displayHeight * 4);
-              gl.readPixels(0, 0, displayWidth, displayHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-              // WebGLコンテンツを処理
-              const imageData = new ImageData(new Uint8ClampedArray(pixels), displayWidth, displayHeight);
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = displayWidth;
-              tempCanvas.height = displayHeight;
-              const tempCtx = tempCanvas.getContext('2d');
-              
-              // WebGLコンテンツを正しい向きで描画
-              tempCtx.putImageData(imageData, 0, 0);
-              ctx.save();
-              ctx.translate(0, displayHeight);
-              ctx.scale(1, -1);
-              ctx.drawImage(tempCanvas, 0, 0);
-              ctx.restore();
-
-              // ロゴを描画
-              const logoWidth = Math.min(150, displayWidth * 0.3);
-              const logoHeight = (logoWidth * logoImg.height) / logoImg.width;
-              const logoX = (displayWidth - logoWidth) / 2;
-              const logoY = displayHeight - logoHeight - 20;
-              
-              ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
-
-              // 画像データを生成
-              resolve(canvas.toDataURL('image/png', 1.0));
-            } catch (error) {
-              console.error('Capture error:', error);
-              resolve(null);
-            }
-          });
+        })
+        .catch((error) => {
+          console.error('Error accessing the camera', error);
         });
+
+      // WebGLとカメラ映像を合成して描画するための関数
+      function captureWebGLAndVideo(renderer, canvas) {
+        try {
+          const gl = renderer.getContext();
+          const width = gl.drawingBufferWidth;
+          const height = gl.drawingBufferHeight;
+
+          // 一時キャンバスを作成して、WebGLとカメラ映像を描画
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = width;
+          tempCanvas.height = height;
+          const tempContext = tempCanvas.getContext('2d');
+
+          // カメラ映像を描画
+          tempContext.drawImage(video, 0, 0, width, height);
+
+          // WebGLの内容を描画（Y軸を反転）
+          const pixels = new Uint8Array(width * height * 4);
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+
+          // Y軸を反転してWebGLコンテンツを合成
+          tempContext.save();
+          tempContext.scale(1, -1);
+          tempContext.putImageData(imageData, 0, -height);
+          tempContext.restore();
+
+          // 最終的にメインキャンバスに合成
+          const context = canvas.getContext('2d');
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(tempCanvas, 0, 0);
+
+        } catch (error) {
+          console.error("Error during WebGL and video capture", error);
+        }
       }
 
-      // 撮影ボタンのクリックハンドラ
-      captureBtn.addEventListener('click', async () => {
-        if (!isTracking || video.readyState !== video.HAVE_ENOUGH_DATA) {
-          alert('カメラとARの準備ができるまでお待ちください。');
-          return;
-        }
+      // 撮影ボタンを押した際に現在のカメラ映像とAR表示をキャプチャする機能
+      captureBtn.addEventListener('click', () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          const renderer = scene.renderer;
 
-        loadingOverlay.style.display = 'flex';
-        captureBtn.style.display = 'none';
+          if (renderer && scene.camera) {
+            requestAnimationFrame(() => {
+              try {
+                // WebGLとカメラ映像を合成して描画
+                captureWebGLAndVideo(renderer, canvas);
 
-        try {
-          // ARの描画を待つ
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const imageData = await captureScene();
-          
-          if (imageData) {
-            const link = document.createElement('a');
-            link.href = imageData;
-            link.download = `ar-capture-${new Date().toISOString()}.png`;
-            link.click();
+                // ロゴをキャンバスに描画（中央に配置）
+                const context = canvas.getContext('2d');
+                const logoWidth = logoImg.width;
+                const logoHeight = logoImg.height;
+                const x = (canvas.width - logoWidth) / 2;
+                const y = (canvas.height - logoHeight) / 2;
+                context.drawImage(logoImg, x, y);
+
+                // キャプチャ画像を生成してダウンロード
+                const imageData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = 'capture.png';
+                link.click();
+              } catch (error) {
+                console.error("Render error:", error);
+              }
+            });
           } else {
-            alert('キャプチャに失敗しました。もう一度お試しください。');
-          }
-        } catch (error) {
-          console.error('Capture process error:', error);
-          alert('キャプチャ中にエラーが発生しました。もう一度お試しください。');
-        } finally {
-          loadingOverlay.style.display = 'none';
-          captureBtn.style.display = 'block';
-        }
-      });
-
-      // 画面の表示状態が変更された時の処理
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
+            console.error("Renderer or camera is not available for rendering.");
           }
         } else {
-          initCamera();
+          console.log("Waiting for video data...");
         }
       });
     </script>
-</body>
+  </body>
 </html>
