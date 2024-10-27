@@ -220,10 +220,14 @@
               tempCanvas.width = width;
               tempCanvas.height = height;
               const tempCtx = tempCanvas.getContext('2d');
+
+              // Create an ImageData object and populate it with WebGL pixel data
               const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+
+              // Put image data into the temporary canvas
               tempCtx.putImageData(imageData, 0, 0);
 
-              // Flip and draw WebGL content
+              // Flip and draw WebGL content to the main canvas
               ctx.save();
               ctx.scale(1, -1);
               ctx.drawImage(tempCanvas, 0, -height);
