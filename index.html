@@ -21,6 +21,9 @@
         <a-asset-item id="headModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/sparkar/headOccluder.glb"></a-asset-item>
       </a-assets>
 
+      <!-- カメラの設定（必須） -->
+      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
+
       <!-- 頭部のオクルージョンを使用 -->
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model mindar-face-occluder position="0 -0.3 0.15" rotation="0 0 0" scale="0.065 0.065 0.065" src="#headModel"></a-gltf-model>
