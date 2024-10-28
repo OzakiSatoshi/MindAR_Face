@@ -4,33 +4,33 @@ html, body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-  }
-  
-  .a-canvas {
+}
+
+.a-canvas {
     z-index: 0 !important;
     position: absolute !important;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-  }
-  
-  .logo {
+}
+
+.logo {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999 !important;
     pointer-events: none;
-  }
-  
-  .logo img {
+}
+
+.logo img {
     max-width: 150px;
     width: 30%;
     height: auto;
-  }
-  
-  #capture-btn {
+}
+
+#capture-btn {
     position: absolute;
     bottom: 10px;
     left: 10px;
@@ -39,25 +39,24 @@ html, body {
     background-color: transparent;
     border: none;
     cursor: pointer;
-  }
-  
-  @media (max-width: 768px) {
+}
+
+@media (max-width: 768px) {
     .logo img {
-      max-width: 100px;
+        max-width: 100px;
     }
-  
+
     #capture-btn {
-      width: 60px;
-      height: 60px;
-      bottom: 20px;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
     }
-  }
-  
-  a-scene {
+}
+
+a-scene {
     width: 100vw;
     height: 100vh;
     position: absolute;
     top: 0;
     left: 0;
-  }
-  
+}
