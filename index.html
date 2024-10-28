@@ -82,7 +82,8 @@
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0"></a-camera>
+      <!-- カメラの位置を固定しない -->
+      <a-camera active="false"></a-camera>
 
       <a-entity mindar-face-target="anchorIndex: 168">
         <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
