@@ -18,13 +18,16 @@
              id="arScene">
       <a-assets>
         <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
+        <a-asset-item id="headModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/sparkar/headOccluder.glb"></a-asset-item>
       </a-assets>
 
-      <!-- カメラの位置を固定しない -->
-      <a-camera active="false"></a-camera>
+      <!-- 頭部のオクルージョンを使用 -->
+      <a-entity mindar-face-target="anchorIndex: 168">
+        <a-gltf-model mindar-face-occluder position="0 -0.3 0.15" rotation="0 0 0" scale="0.065 0.065 0.065" src="#headModel"></a-gltf-model>
+      </a-entity>
 
       <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model id="arObject" rotation="0 0 0" position="0 0 -0.05" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
+        <a-gltf-model rotation="0 0 0" position="0 0 0" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
       </a-entity>
     </a-scene>
 
@@ -38,7 +41,6 @@
 
     <canvas id="arCanvas" style="display:none;"></canvas>
 
-    <!-- JavaScriptをボディ末尾に移動 -->
     <script src="script.js"></script>
   </body>
 </html>
