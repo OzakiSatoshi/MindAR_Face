@@ -1,39 +1,38 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
-    <!-- 外部スタイルシートをリンク -->
     <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
-    <video id="video" autoplay playsinline style="display:none;"></video>
+    <div class="example-container">
+      <a-scene mindar-face embedded color-space="sRGB"
+               renderer="colorManagement: true, physicallyCorrectLights: true"
+               vr-mode-ui="enabled: false"
+               device-orientation-permission-ui="enabled: false"
+               id="arScene">
+        
+        <a-assets>
+          <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
+          <a-asset-item id="headModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/sparkar/headOccluder.glb"></a-asset-item>
+        </a-assets>
 
-    <a-scene mindar-face embedded color-space="sRGB"
-             renderer="colorManagement: true, alpha: true"
-             vr-mode-ui="enabled: false"
-             device-orientation-permission-ui="enabled: false"
-             id="arScene">
-      <a-assets>
-        <a-asset-item id="glassesModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/glasses/scene.gltf"></a-asset-item>
-        <a-asset-item id="headModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/sparkar/headOccluder.glb"></a-asset-item>
-      </a-assets>
+        <a-camera active="false"></a-camera>
 
-      <!-- カメラの設定 -->
-      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
+        <!-- オクルージョン -->
+        <a-entity mindar-face-target="anchorIndex: 168">
+          <a-gltf-model mindar-face-occluder position="0 -0.3 0.15" rotation="0 0 0" scale="0.065 0.065 0.065" src="#headModel"></a-gltf-model>
+        </a-entity>
 
-      <!-- 頭部のオクルージョンを使用 -->
-      <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model mindar-face-occluder position="0 -0.3 0.15" rotation="0 0 0" scale="0.065 0.065 0.065" src="#headModel"></a-gltf-model>
-      </a-entity>
-
-      <!-- glassesModelの配置とスケールを調整 -->
-      <a-entity mindar-face-target="anchorIndex: 168">
-        <a-gltf-model rotation="0 0 0" position="0 -0.05 0" scale="0.015 0.015 0.015" src="#glassesModel"></a-gltf-model>
-      </a-entity>
-    </a-scene>
+        <!-- メガネモデル -->
+        <a-entity mindar-face-target="anchorIndex: 168">
+          <a-gltf-model rotation="0 0 0" position="0 -0.05 0" scale="0.015 0.015 0.015" src="#glassesModel"></a-gltf-model>
+        </a-entity>
+      </a-scene>
+    </div>
 
     <div class="logo">
       <img id="logo-img" src="./Logo%26Font_BackAlpha.png" alt="Company Logo" style="width:100%; height:100%;">
