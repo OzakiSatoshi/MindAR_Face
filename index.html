@@ -20,7 +20,8 @@
           <a-asset-item id="headModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/face-tracking/assets/sparkar/headOccluder.glb"></a-asset-item>
         </a-assets>
 
-        <a-camera active="false"></a-camera>
+        <a-camera active="false" look-controls="enabled: false"></a-camera>
+
 
         <!-- オクルージョン -->
         <a-entity mindar-face-target="anchorIndex: 168">
@@ -29,7 +30,7 @@
 
         <!-- メガネモデル -->
         <a-entity mindar-face-target="anchorIndex: 168">
-          <a-gltf-model rotation="0 0 0" position="0 -0.05 0" scale="0.015 0.015 0.015" src="#glassesModel"></a-gltf-model>
+          <a-gltf-model rotation="0 0 0" position="0 0 -0.1" scale="0.01 0.01 0.01" src="#glassesModel"></a-gltf-model>
         </a-entity>
       </a-scene>
     </div>
