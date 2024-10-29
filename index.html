@@ -8,6 +8,9 @@
   </head>
 
   <body>
+    <!-- video要素を追加 -->
+    <video id="video" autoplay playsinline style="display:none;"></video>
+
     <div class="example-container">
       <a-scene mindar-face embedded color-space="sRGB"
                renderer="colorManagement: true, physicallyCorrectLights: true"
@@ -21,7 +24,6 @@
         </a-assets>
 
         <a-camera active="false" look-controls="enabled: false"></a-camera>
-
 
         <!-- オクルージョン -->
         <a-entity mindar-face-target="anchorIndex: 168">
